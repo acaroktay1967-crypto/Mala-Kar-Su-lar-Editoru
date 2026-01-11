@@ -80,6 +80,7 @@ class CaseManager:
     def __init__(self, data_file: str = "cases.json"):
         self.data_file = data_file
         self.cases: Dict[str, Case] = {}
+        self.next_case_number = 1
         self.load_cases()
     
     def load_cases(self):
@@ -91,6 +92,13 @@ class CaseManager:
                     for case_data in data:
                         case = Case.from_dict(case_data)
                         self.cases[case.case_id] = case
+                        # Update next case number based on existing IDs
+                        if case.case_id.startswith("CASE-"):
+                            try:
+                                case_num = int(case.case_id.split("-")[1])
+                                self.next_case_number = max(self.next_case_number, case_num + 1)
+                            except (IndexError, ValueError):
+                                pass
             except (json.JSONDecodeError, IOError) as e:
                 print(f"Veri yükleme hatası: {e}")
     
@@ -106,7 +114,8 @@ class CaseManager:
     def create_case(self, title: str, description: str, date_reported: str,
                    location: str = "", evidence: List[str] = None) -> Case:
         """Create a new case."""
-        case_id = f"CASE-{len(self.cases) + 1:04d}"
+        case_id = f"CASE-{self.next_case_number:04d}"
+        self.next_case_number += 1
         case = Case(case_id, title, description, date_reported, 
                    location=location, evidence=evidence)
         self.cases[case_id] = case

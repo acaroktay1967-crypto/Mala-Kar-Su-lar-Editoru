@@ -7,17 +7,19 @@ Tests basic functionality without external dependencies
 import os
 import json
 import tempfile
+from datetime import datetime, timedelta
 from case_manager import Case, CaseManager
 
 
 def test_case_creation():
     """Test creating a case."""
     print("Test 1: Vaka Oluşturma (Case Creation)...")
+    today = datetime.now().strftime("%Y-%m-%d")
     case = Case(
         case_id="TEST-0001",
         title="Test Vakası",
         description="Bu bir test vakasıdır",
-        date_reported="2026-01-11",
+        date_reported=today,
         location="Test Lokasyonu",
         evidence=["Kanıt 1", "Kanıt 2"]
     )
@@ -32,11 +34,12 @@ def test_case_creation():
 def test_case_update():
     """Test updating a case."""
     print("\nTest 2: Vaka Güncelleme (Case Update)...")
+    today = datetime.now().strftime("%Y-%m-%d")
     case = Case(
         case_id="TEST-0002",
         title="Güncellenecek Vaka",
         description="Güncelleme testi",
-        date_reported="2026-01-11"
+        date_reported=today
     )
     
     case.add_update("İlk güncelleme")
@@ -58,12 +61,13 @@ def test_case_manager():
     
     try:
         manager = CaseManager(data_file=temp_file.name)
+        today = datetime.now().strftime("%Y-%m-%d")
         
         # Test create
         case1 = manager.create_case(
             title="Vaka 1",
             description="İlk test vakası",
-            date_reported="2026-01-11",
+            date_reported=today,
             location="Ankara"
         )
         assert case1.case_id == "CASE-0001"
@@ -71,7 +75,7 @@ def test_case_manager():
         case2 = manager.create_case(
             title="Vaka 2",
             description="İkinci test vakası",
-            date_reported="2026-01-11",
+            date_reported=today,
             location="İstanbul"
         )
         assert case2.case_id == "CASE-0002"
@@ -110,12 +114,13 @@ def test_case_manager():
 def test_case_serialization():
     """Test case serialization and deserialization."""
     print("\nTest 4: Veri Serileştirme (Data Serialization)...")
+    today = datetime.now().strftime("%Y-%m-%d")
     
     original_case = Case(
         case_id="TEST-0003",
         title="Serileştirme Testi",
         description="JSON dönüşüm testi",
-        date_reported="2026-01-11",
+        date_reported=today,
         location="Test",
         evidence=["Kanıt A"]
     )
@@ -145,13 +150,14 @@ def test_status_filtering():
     
     try:
         manager = CaseManager(data_file=temp_file.name)
+        today = datetime.now().strftime("%Y-%m-%d")
         
-        case1 = manager.create_case("Açık Vaka", "Açık durum", "2026-01-11")
-        case2 = manager.create_case("Soruşturma Vakası", "Soruşturma", "2026-01-11")
+        case1 = manager.create_case("Açık Vaka", "Açık durum", today)
+        case2 = manager.create_case("Soruşturma Vakası", "Soruşturma", today)
         case2.change_status("Soruşturma")
         manager.save_cases()
         
-        case3 = manager.create_case("Kapalı Vaka", "Kapalı", "2026-01-11")
+        case3 = manager.create_case("Kapalı Vaka", "Kapalı", today)
         case3.change_status("Kapalı")
         manager.save_cases()
         
