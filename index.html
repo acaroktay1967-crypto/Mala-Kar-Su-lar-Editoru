@@ -1,0 +1,135 @@
+<!-- Ana navigasyona yeni buton ekleyin -->
+<button class="nav-btn" data-tab="mahkeme-kararlari">
+  <i class="fas fa-balance-scale"></i> Mahkeme Kararları
+</button>
+
+<!-- Mahkeme Kararları Sekmesi -->
+<section id="mahkeme-kararlari" class="tab-content">
+  <div class="tab-header">
+    <h2><i class="fas fa-balance-scale"></i> Örnek Mahkeme Kararları</h2>
+    <div class="header-actions">
+      <button class="btn-secondary" id="btn-new-karar">
+        <i class="fas fa-plus"></i> Yeni Karar Ekle
+      </button>
+      <div class="search-box">
+        <input type="text" id="karar-search" placeholder="Karar ara...">
+        <i class="fas fa-search"></i>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Filtreleme Alanı -->
+  <div class="filters">
+    <div class="filter-group">
+      <label for="filter-suç-türü">Suç Türü:</label>
+      <select id="filter-suç-türü">
+        <option value="all">Tümü</option>
+        <option value="Bilişim Suçları">Bilişim Suçları</option>
+        <option value="Nitelikli Dolandırıcılık">Nitelikli Dolandırıcılık</option>
+        <option value="Kredi Kartı Suçları">Kredi Kartı Suçları</option>
+      </select>
+    </div>
+    
+    <div class="filter-group">
+      <label for="filter-emsal">Emsal Kararlar:</label>
+      <select id="filter-emsal">
+        <option value="all">Tümü</option>
+        <option value="1">Sadece Emsal Kararlar</option>
+      </select>
+    </div>
+    
+    <div class="filter-group">
+      <label for="filter-tarih">Tarih Aralığı:</label>
+      <input type="date" id="filter-tarih-baslangic">
+      <span> - </span>
+      <input type="date" id="filter-tarih-bitis">
+    </div>
+    
+    <button class="btn-primary" id="btn-filter">
+      <i class="fas fa-filter"></i> Filtrele
+    </button>
+  </div>
+  
+  <!-- Karar Listesi -->
+  <div class="karar-listesi" id="karar-listesi">
+    <!-- Kararlar buraya yüklenecek -->
+  </div>
+  
+  <!-- Karar Detay Modal -->
+  <div class="modal" id="modal-karar-detay">
+    <div class="modal-content large-modal">
+      <div class="modal-header">
+        <h3 id="modal-karar-baslik">Karar Detayı</h3>
+        <button class="modal-close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="karar-info-grid">
+          <div class="info-item">
+            <label>Karar No:</label>
+            <span id="detay-karar-no"></span>
+          </div>
+          <div class="info-item">
+            <label>Tarih:</label>
+            <span id="detay-karar-tarihi"></span>
+          </div>
+          <div class="info-item">
+            <label>Mahkeme:</label>
+            <span id="detay-mahkeme"></span>
+          </div>
+          <div class="info-item">
+            <label>Dosya No:</label>
+            <span id="detay-dosya-no"></span>
+          </div>
+          <div class="info-item">
+            <label>Suç Türü:</label>
+            <span id="detay-suç-türü"></span>
+          </div>
+          <div class="info-item">
+            <label>Madde No:</label>
+            <span id="detay-madde-no"></span>
+          </div>
+          <div class="info-item">
+            <label>İlgili Kanun:</label>
+            <span id="detay-ilgili-kanun"></span>
+          </div>
+        </div>
+        
+        <div class="section">
+          <h4>Özet</h4>
+          <div class="content-box" id="detay-özet"></div>
+        </div>
+        
+        <div class="section">
+          <h4>Karar Metni</h4>
+          <div class="content-box" id="detay-karar-metni"></div>
+        </div>
+        
+        <div class="section" id="gerekceler-section">
+          <h4>Gerekçeler</h4>
+          <div id="detay-gerekceler"></div>
+        </div>
+        
+        <div class="section">
+          <h4>Etiketler</h4>
+          <div id="detay-tags"></div>
+        </div>
+        
+        <div class="section" id="ilgili-kararlar-section">
+          <h4>İlgili Kararlar</h4>
+          <div id="detay-ilgili-kararlar"></div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" id="btn-print-karar">
+          <i class="fas fa-print"></i> Yazdır
+        </button>
+        <button class="btn-secondary" id="btn-export-karar">
+          <i class="fas fa-download"></i> Dışa Aktar
+        </button>
+        <button class="btn-primary" id="btn-use-as-template">
+          <i class="fas fa-copy"></i> Şablon Olarak Kullan
+        </button>
+      </div>
+    </div>
+  </div>
+</section>
