@@ -2,17 +2,17 @@
   "name": "mala-karsi-islenen-suclar-editoru",
   "version": "1.0.0",
   "description": "TCK Mala Karşı İşlenen Suçlar Editörü",
-  "main": "main.js",
+  "main": "electron-main.js",
   "scripts": {
-    "start": "electron .",
+    "start": "electron . --no-sandbox",
     "build": "electron-builder",
-    "dev": "electron . --debug"
+    "dev": "electron . --no-sandbox --debug"
   },
   "dependencies": {
-    "electron": "^25.0.0",
-    "sqlite3": "^5.1.6",
+    "electron": "^28.3.2",
     "exceljs": "^4.4.0",
     "pdfkit": "^0.14.0",
+    "sqlite3": "^5.1.6",
     "uuid": "^9.0.0"
   },
   "devDependencies": {
