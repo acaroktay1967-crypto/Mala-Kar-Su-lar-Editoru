@@ -1,0 +1,537 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Tkinter Metin Editörü Modülü
+Punto, yazı tipi, Unicode, kopyala/yapıştır, kaydet, yazdır özellikleri
+"""
+
+import tkinter as tk
+from tkinter import ttk, filedialog, messagebox, font
+import json
+import os
+from pathlib import Path
+from datetime import datetime
+
+class TextEditorTk:
+    """Tkinter tabanlı gelişmiş metin editörü"""
+    
+    def __init__(self, parent):
+        self.parent = parent
+        self.current_file = None
+        self.current_font_size = 12
+        self.current_font_family = "Arial"
+        self.is_bold = False
+        self.is_italic = False
+        
+        self.create_widgets()
+        self.create_menu()
+        self.create_toolbar()
+        self.bind_shortcuts()
+    
+    def create_widgets(self):
+        """Arayüz bileşenlerini oluşturur"""
+        # Ana frame
+        main_frame = ttk.Frame(self.parent)
+        main_frame.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
+        
+        # Toolbar frame
+        self.toolbar_frame = ttk.Frame(main_frame)
+        self.toolbar_frame.pack(fill=tk.X, pady=(0, 5))
+        
+        # Metin alanı
+        text_frame = ttk.Frame(main_frame)
+        text_frame.pack(fill=tk.BOTH, expand=True)
+        
+        # Scrollbar
+        scrollbar = ttk.Scrollbar(text_frame)
+        scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+        
+        # Text widget
+        self.text_area = tk.Text(
+            text_frame,
+            wrap=tk.WORD,
+            font=(self.current_font_family, self.current_font_size),
+            undo=True,
+            yscrollcommand=scrollbar.set,
+            maxundo=-1
+        )
+        self.text_area.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        scrollbar.config(command=self.text_area.yview)
+        
+        # Durum çubuğu
+        self.status_bar = ttk.Label(
+            main_frame,
+            text="Hazır | Unicode: UTF-8 | Satır: 1 | Sütun: 1",
+            relief=tk.SUNKEN,
+            anchor=tk.W
+        )
+        self.status_bar.pack(side=tk.BOTTOM, fill=tk.X)
+        
+        # Bağlantılar
+        self.text_area.bind('<KeyRelease>', self.update_status_bar)
+        self.text_area.bind('<ButtonRelease>', self.update_status_bar)
+    
+    def create_toolbar(self):
+        """Araç çubuğunu oluşturur"""
+        # Font ailesi seçimi
+        ttk.Label(self.toolbar_frame, text="Yazı Tipi:").pack(side=tk.LEFT, padx=(0, 2))
+        
+        self.font_var = tk.StringVar(value=self.current_font_family)
+        font_combo = ttk.Combobox(
+            self.toolbar_frame,
+            textvariable=self.font_var,
+            values=list(font.families()),
+            width=15,
+            state='readonly'
+        )
+        font_combo.pack(side=tk.LEFT, padx=(0, 10))
+        font_combo.bind('<<ComboboxSelected>>', self.change_font_family)
+        
+        # Font boyutu
+        ttk.Label(self.toolbar_frame, text="Punto:").pack(side=tk.LEFT, padx=(0, 2))
+        
+        self.size_var = tk.StringVar(value=str(self.current_font_size))
+        size_combo = ttk.Combobox(
+            self.toolbar_frame,
+            textvariable=self.size_var,
+            values=[8, 9, 10, 11, 12, 14, 16, 18, 20, 22, 24, 26, 28, 36, 48, 72],
+            width=5,
+            state='readonly'
+        )
+        size_combo.pack(side=tk.LEFT, padx=(0, 10))
+        size_combo.bind('<<ComboboxSelected>>', self.change_font_size)
+        
+        # Kalın butonu
+        self.bold_btn = ttk.Button(
+            self.toolbar_frame,
+            text="K",
+            width=3,
+            command=self.toggle_bold
+        )
+        self.bold_btn.pack(side=tk.LEFT, padx=(0, 5))
+        
+        # İtalik butonu
+        self.italic_btn = ttk.Button(
+            self.toolbar_frame,
+            text="İ",
+            width=3,
+            command=self.toggle_italic
+        )
+        self.italic_btn.pack(side=tk.LEFT, padx=(0, 10))
+        
+        # Font büyüt/küçült
+        ttk.Button(
+            self.toolbar_frame,
+            text="A+",
+            width=3,
+            command=self.increase_font
+        ).pack(side=tk.LEFT, padx=(0, 5))
+        
+        ttk.Button(
+            self.toolbar_frame,
+            text="A-",
+            width=3,
+            command=self.decrease_font
+        ).pack(side=tk.LEFT, padx=(0, 20))
+        
+        # Unicode kontrolü
+        self.unicode_btn = ttk.Checkbutton(
+            self.toolbar_frame,
+            text="Unicode (UTF-8)",
+            variable=tk.BooleanVar(value=True),
+            state='disabled'
+        )
+        self.unicode_btn.pack(side=tk.LEFT)
+    
+    def create_menu(self):
+        """Menü çubuğunu oluşturur"""
+        menubar = tk.Menu(self.parent)
+        self.parent.config(menu=menubar)
+        
+        # Dosya menüsü
+        file_menu = tk.Menu(menubar, tearoff=0)
+        menubar.add_cascade(label="Dosya", menu=file_menu)
+        
+        file_menu.add_command(label="Yeni", accelerator="Ctrl+N", command=self.new_file)
+        file_menu.add_command(label="Aç...", accelerator="Ctrl+O", command=self.open_file)
+        file_menu.add_command(label="Kaydet", accelerator="Ctrl+S", command=self.save_file)
+        file_menu.add_command(label="Farklı Kaydet...", accelerator="Ctrl+Shift+S", command=self.save_as)
+        file_menu.add_separator()
+        file_menu.add_command(label="Yazdır...", accelerator="Ctrl+P", command=self.print_document)
+        file_menu.add_separator()
+        file_menu.add_command(label="Çıkış", accelerator="Alt+F4", command=self.parent.quit)
+        
+        # Düzenle menüsü
+        edit_menu = tk.Menu(menubar, tearoff=0)
+        menubar.add_cascade(label="Düzenle", menu=edit_menu)
+        
+        edit_menu.add_command(label="Geri Al", accelerator="Ctrl+Z", command=self.undo)
+        edit_menu.add_command(label="Yinele", accelerator="Ctrl+Y", command=self.redo)
+        edit_menu.add_separator()
+        edit_menu.add_command(label="Kes", accelerator="Ctrl+X", command=self.cut)
+        edit_menu.add_command(label="Kopyala", accelerator="Ctrl+C", command=self.copy)
+        edit_menu.add_command(label="Yapıştır", accelerator="Ctrl+V", command=self.paste)
+        edit_menu.add_separator()
+        edit_menu.add_command(label="Tümünü Seç", accelerator="Ctrl+A", command=self.select_all)
+        
+        # Biçim menüsü
+        format_menu = tk.Menu(menubar, tearoff=0)
+        menubar.add_cascade(label="Biçim", menu=format_menu)
+        
+        format_menu.add_command(label="Yazı Tipi...", command=self.select_font)
+        format_menu.add_command(label="Paragraf...", command=self.format_paragraph)
+        
+        # Görünüm menüsü
+        view_menu = tk.Menu(menubar, tearoff=0)
+        menubar.add_cascade(label="Görünüm", menu=view_menu)
+        
+        view_menu.add_command(label="Büyüt", accelerator="Ctrl++", command=self.zoom_in)
+        view_menu.add_command(label="Küçült", accelerator="Ctrl+-", command=self.zoom_out)
+        view_menu.add_command(label="Normal Boyut", accelerator="Ctrl+0", command=self.zoom_reset)
+    
+    def bind_shortcuts(self):
+        """Klavye kısayollarını bağlar"""
+        self.parent.bind('<Control-n>', lambda e: self.new_file())
+        self.parent.bind('<Control-o>', lambda e: self.open_file())
+        self.parent.bind('<Control-s>', lambda e: self.save_file())
+        self.parent.bind('<Control-Shift-S>', lambda e: self.save_as())
+        self.parent.bind('<Control-p>', lambda e: self.print_document())
+        self.parent.bind('<Control-z>', lambda e: self.undo())
+        self.parent.bind('<Control-y>', lambda e: self.redo())
+        self.parent.bind('<Control-x>', lambda e: self.cut())
+        self.parent.bind('<Control-c>', lambda e: self.copy())
+        self.parent.bind('<Control-v>', lambda e: self.paste())
+        self.parent.bind('<Control-a>', lambda e: self.select_all())
+        self.parent.bind('<Control-plus>', lambda e: self.zoom_in())
+        self.parent.bind('<Control-minus>', lambda e: self.zoom_out())
+        self.parent.bind('<Control-0>', lambda e: self.zoom_reset())
+    
+    def new_file(self):
+        """Yeni dosya oluştur"""
+        if self.text_area.edit_modified():
+            if not messagebox.askyesno("Kaydet", "Değişiklikleri kaydetmek istiyor musunuz?"):
+                return
+        
+        self.text_area.delete(1.0, tk.END)
+        self.current_file = None
+        self.parent.title("Yeni Belge - Nitelikli Dolandırıcılık Editörü")
+        self.text_area.edit_modified(False)
+    
+    def open_file(self):
+        """Dosya aç"""
+        file_path = filedialog.askopenfilename(
+            title="Dosya Aç",
+            filetypes=[
+                ("Tüm Dosyalar", "*.*"),
+                ("Metin Dosyaları", "*.txt"),
+                ("Markdown", "*.md"),
+                ("JSON", "*.json"),
+                ("Python", "*.py")
+            ],
+            initialdir=Path.home() / "Documents"
+        )
+        
+        if file_path:
+            try:
+                with open(file_path, 'r', encoding='utf-8') as f:
+                    content = f.read()
+                
+                self.text_area.delete(1.0, tk.END)
+                self.text_area.insert(1.0, content)
+                self.current_file = file_path
+                self.parent.title(f"{Path(file_path).name} - Nitelikli Dolandırıcılık Editörü")
+                self.text_area.edit_modified(False)
+                self.update_status_bar()
+                
+            except Exception as e:
+                messagebox.showerror("Hata", f"Dosya açılamadı: {e}")
+    
+    def save_file(self):
+        """Dosyayı kaydet"""
+        if self.current_file:
+            self._save_to_file(self.current_file)
+        else:
+            self.save_as()
+    
+    def save_as(self):
+        """Farklı kaydet"""
+        file_path = filedialog.asksaveasfilename(
+            title="Farklı Kaydet",
+            defaultextension=".txt",
+            filetypes=[
+                ("Metin Dosyası", "*.txt"),
+                ("Markdown", "*.md"),
+                ("JSON", "*.json"),
+                ("Python", "*.py"),
+                ("Tüm Dosyalar", "*.*")
+            ],
+            initialdir=Path.home() / "Documents"
+        )
+        
+        if file_path:
+            self._save_to_file(file_path)
+            self.current_file = file_path
+            self.parent.title(f"{Path(file_path).name} - Nitelikli Dolandırıcılık Editörü")
+    
+    def _save_to_file(self, file_path):
+        """Metni dosyaya kaydeder"""
+        try:
+            content = self.text_area.get(1.0, tk.END)
+            with open(file_path, 'w', encoding='utf-8') as f:
+                f.write(content)
+            
+            self.text_area.edit_modified(False)
+            messagebox.showinfo("Başarılı", f"Dosya kaydedildi: {file_path}")
+            
+        except Exception as e:
+            messagebox.showerror("Hata", f"Dosya kaydedilemedi: {e}")
+    
+    def print_document(self):
+        """Belgeyi yazdır"""
+        from tkinter import simpledialog
+        import tempfile
+        import subprocess
+        import platform
+        
+        try:
+            # HTML olarak oluştur
+            content = self.text_area.get(1.0, tk.END)
+            html_content = f"""
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <meta charset="UTF-8">
+                <title>{self.current_file or 'Belge'}</title>
+                <style>
+                    body {{ font-family: '{self.current_font_family}'; font-size: {self.current_font_size}pt; }}
+                    pre {{ white-space: pre-wrap; }}
+                </style>
+            </head>
+            <body>
+                <pre>{content}</pre>
+            </body>
+            </html>
+            """
+            
+            # Geçici HTML dosyası oluştur
+            with tempfile.NamedTemporaryFile(mode='w', suffix='.html', delete=False, encoding='utf-8') as f:
+                f.write(html_content)
+                temp_file = f.name
+            
+            # İşletim sistemine göre yazdır
+            system = platform.system()
+            
+            if system == 'Windows':
+                os.startfile(temp_file, 'print')
+            elif system == 'Darwin':  # macOS
+                subprocess.run(['lp', temp_file])
+            elif system == 'Linux':
+                subprocess.run(['lp', temp_file])
+            
+            messagebox.showinfo("Başarılı", "Yazdırma işlemi başlatıldı")
+            
+        except Exception as e:
+            messagebox.showerror("Hata", f"Yazdırma hatası: {e}")
+    
+    def change_font_family(self, event=None):
+        """Yazı tipi ailesini değiştir"""
+        self.current_font_family = self.font_var.get()
+        self.update_text_font()
+    
+    def change_font_size(self, event=None):
+        """Yazı tipi boyutunu değiştir"""
+        try:
+            self.current_font_size = int(self.size_var.get())
+            self.update_text_font()
+        except ValueError:
+            pass
+    
+    def update_text_font(self):
+        """Metin alanının yazı tipini günceller"""
+        font_config = (self.current_font_family, self.current_font_size)
+        if self.is_bold:
+            font_config += ('bold',)
+        if self.is_italic:
+            font_config += ('italic',)
+        
+        self.text_area.config(font=font_config)
+    
+    def toggle_bold(self):
+        """Kalın yazı tipini aç/kapat"""
+        self.is_bold = not self.is_bold
+        self.update_text_font()
+        self.update_button_states()
+    
+    def toggle_italic(self):
+        """İtalik yazı tipini aç/kapat"""
+        self.is_italic = not self.is_italic
+        self.update_text_font()
+        self.update_button_states()
+    
+    def update_button_states(self):
+        """Buton durumlarını günceller"""
+        self.bold_btn.state(['pressed' if self.is_bold else '!pressed'])
+        self.italic_btn.state(['pressed' if self.is_italic else '!pressed'])
+    
+    def increase_font(self):
+        """Yazı tipini büyüt"""
+        self.current_font_size += 1
+        self.size_var.set(str(self.current_font_size))
+        self.update_text_font()
+    
+    def decrease_font(self):
+        """Yazı tipini küçült"""
+        if self.current_font_size > 6:
+            self.current_font_size -= 1
+            self.size_var.set(str(self.current_font_size))
+            self.update_text_font()
+    
+    def select_font(self):
+        """Yazı tipi seçici"""
+        from tkinter.font import Font
+        
+        font_window = tk.Toplevel(self.parent)
+        font_window.title("Yazı Tipi")
+        font_window.geometry("400x300")
+        font_window.transient(self.parent)
+        
+        # Font listesi
+        font_list = tk.Listbox(font_window, width=30)
+        font_list.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=5, pady=5)
+        
+        scrollbar = ttk.Scrollbar(font_window, command=font_list.yview)
+        scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+        font_list.config(yscrollcommand=scrollbar.set)
+        
+        for font_name in sorted(font.families()):
+            font_list.insert(tk.END, font_name)
+        
+        def select_and_close():
+            selection = font_list.curselection()
+            if selection:
+                self.current_font_family = font_list.get(selection[0])
+                self.font_var.set(self.current_font_family)
+                self.update_text_font()
+                font_window.destroy()
+        
+        ttk.Button(font_window, text="Seç", command=select_and_close).pack(pady=5)
+    
+    def format_paragraph(self):
+        """Paragraf biçimlendirme"""
+        from tkinter import simpledialog
+        
+        align = simpledialog.askstring(
+            "Paragraf Hizala",
+            "Hizalama (left/center/right/justify):",
+            initialvalue="left"
+        )
+        
+        if align and align in ['left', 'center', 'right', 'justify']:
+            self.text_area.tag_configure(align, justify=align)
+            try:
+                self.text_area.tag_add(align, 'sel.first', 'sel.last')
+            except:
+                pass
+    
+    def zoom_in(self):
+        """Yakınlaştır"""
+        self.current_font_size += 2
+        self.size_var.set(str(self.current_font_size))
+        self.update_text_font()
+    
+    def zoom_out(self):
+        """Uzaklaştır"""
+        if self.current_font_size > 8:
+            self.current_font_size -= 2
+            self.size_var.set(str(self.current_font_size))
+            self.update_text_font()
+    
+    def zoom_reset(self):
+        """Normal boyuta getir"""
+        self.current_font_size = 12
+        self.size_var.set(str(self.current_font_size))
+        self.update_text_font()
+    
+    def undo(self):
+        """Geri al"""
+        try:
+            self.text_area.edit_undo()
+        except:
+            pass
+    
+    def redo(self):
+        """Yinele"""
+        try:
+            self.text_area.edit_redo()
+        except:
+            pass
+    
+    def cut(self):
+        """Kes"""
+        try:
+            self.text_area.event_generate('<<Cut>>')
+        except:
+            pass
+    
+    def copy(self):
+        """Kopyala"""
+        try:
+            self.text_area.event_generate('<<Copy>>')
+        except:
+            pass
+    
+    def paste(self):
+        """Yapıştır"""
+        try:
+            self.text_area.event_generate('<<Paste>>')
+        except:
+            pass
+    
+    def select_all(self):
+        """Tümünü seç"""
+        self.text_area.tag_add(tk.SEL, '1.0', tk.END)
+        self.text_area.mark_set(tk.INSERT, '1.0')
+        self.text_area.see(tk.INSERT)
+    
+    def update_status_bar(self, event=None):
+        """Durum çubuğunu günceller"""
+        try:
+            # Satır ve sütun bilgisi
+            line, column = self.text_area.index(tk.INSERT).split('.')
+            
+            # Toplam satır sayısı
+            total_lines = int(self.text_area.index(tk.END).split('.')[0]) - 1
+            
+            # Seçili karakter sayısı
+            try:
+                selected = self.text_area.get(tk.SEL_FIRST, tk.SEL_LAST)
+                selected_count = len(selected)
+            except:
+                selected_count = 0
+            
+            status_text = f"Hazır | Unicode: UTF-8 | Satır: {line}/{total_lines} | Sütun: {column}"
+            
+            if selected_count > 0:
+                status_text += f" | Seçili: {selected_count} karakter"
+            
+            self.status_bar.config(text=status_text)
+            
+        except Exception as e:
+            self.status_bar.config(text=f"Hata: {e}")
+    
+    def get_content(self):
+        """Metin içeriğini döndürür"""
+        return self.text_area.get(1.0, tk.END)
+    
+    def set_content(self, content):
+        """Metin içeriğini ayarlar"""
+        self.text_area.delete(1.0, tk.END)
+        self.text_area.insert(1.0, content)
+
+if __name__ == "__main__":
+    root = tk.Tk()
+    root.title("Metin Editörü - Nitelikli Dolandırıcılık Editörü")
+    root.geometry("800x600")
+    
+    editor = TextEditorTk(root)
+    root.mainloop()
