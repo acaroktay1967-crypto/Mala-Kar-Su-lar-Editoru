@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TCK Mala Karşı İşlenen Suçlar Editörü</title>
+    <link rel="stylesheet" href="app.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Additional styles for renderer functionality */
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: -300px;
+            background: white;
+            padding: 15px 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: right 0.3s ease;
+            z-index: 10000;
+            min-width: 250px;
+        }
+        
+        .notification.show {
+            right: 20px;
+        }
+        
+        .notification-success {
+            border-left: 4px solid #4caf50;
+        }
+        
+        .notification-error {
+            border-left: 4px solid #f44336;
+        }
+        
+        .notification-info {
+            border-left: 4px solid #2196f3;
+        }
+        
+        .notification i {
+            font-size: 20px;
+        }
+        
+        .notification-success i {
+            color: #4caf50;
+        }
+        
+        .notification-error i {
+            color: #f44336;
+        }
+        
+        .notification-info i {
+            color: #2196f3;
+        }
+        
+        .field-error {
+            color: #f44336;
+            font-size: 12px;
+            margin-top: 4px;
+        }
+        
+        input.error, textarea.error, select.error {
+            border-color: #f44336;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 9999;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal.active {
+            display: flex;
+        }
+        
+        .modal-content {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+            position: relative;
+        }
+        
+        .modal-content.large-modal {
+            max-width: 1200px;
+            width: 90%;
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+        
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #666;
+        }
+        
+        .modal-close:hover {
+            color: #000;
+        }
+        
+        .modal-footer {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 2px solid #e0e0e0;
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+        
+        .no-results {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+            font-size: 18px;
+        }
+        
+        .activity-item {
+            display: flex;
+            gap: 15px;
+            padding: 12px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        .activity-icon {
+            color: #2196f3;
+            font-size: 20px;
+        }
+        
+        .activity-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .activity-time {
+            font-size: 12px;
+            color: #999;
+            margin-top: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="app-header">
+            <div class="logo">
+                <i class="fas fa-balance-scale"></i>
+                <h1>TCK Mala Karşı İşlenen Suçlar Editörü</h1>
+            </div>
+            <div class="status-bar">
+                <span id="connection-status" class="status-connected">
+                    <i class="fas fa-database"></i> Veritabanı Bağlı
+                </span>
+                <span id="record-count">Kayıtlar Yükleniyor...</span>
+            </div>
+        </header>
+
+        <!-- Ana Navigasyon -->
+        <nav class="main-nav">
+            <button class="nav-btn active" data-tab="dashboard">
+                <i class="fas fa-home"></i> Ana Panel
+            </button>
+            <button class="nav-btn" data-tab="bilisim">
+                <i class="fas fa-laptop-code"></i> Bilişim Suçları
+            </button>
+            <button class="nav-btn" data-tab="dolandiricilik">
+                <i class="fas fa-user-secret"></i> Nitelikli Dolandırıcılık
+            </button>
+            <button class="nav-btn" data-tab="kredi-karti">
+                <i class="fas fa-credit-card"></i> Kredi Kartı Suçları
+            </button>
+            <button class="nav-btn" data-tab="mahkeme-kararlari">
+                <i class="fas fa-balance-scale"></i> Mahkeme Kararları
+            </button>
+            <button class="nav-btn" data-tab="reports">
+                <i class="fas fa-chart-bar"></i> Raporlar
+            </button>
+            <button class="nav-btn" data-tab="backup">
+                <i class="fas fa-save"></i> Yedekleme
+            </button>
+        </nav>
+
+        <!-- İçerik Alanları -->
+        <main class="content-area">
+            <!-- Dashboard -->
+            <section id="dashboard" class="tab-content active">
+                <div class="dashboard-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon bilisim">
+                            <i class="fas fa-laptop-code"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3>Bilişim Suçları</h3>
+                            <p class="stat-count" id="count-bilisim">0</p>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon dolandiricilik">
+                            <i class="fas fa-user-secret"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3>Nitelikli Dolandırıcılık</h3>
+                            <p class="stat-count" id="count-dolandiricilik">0</p>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon kredi-karti">
+                            <i class="fas fa-credit-card"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3>Kredi Kartı Suçları</h3>
+                            <p class="stat-count" id="count-kredi-karti">0</p>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon total">
+                            <i class="fas fa-gavel"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3>Toplam Suç Kaydı</h3>
+                            <p class="stat-count" id="count-total">0</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="recent-activity">
+                    <h3><i class="fas fa-history"></i> Son İşlemler</h3>
+                    <div class="activity-list" id="recent-activities">
+                        <!-- Son işlemler buraya yüklenecek -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- Bilişim Suçları -->
+            <section id="bilisim" class="tab-content">
+                <div class="tab-header">
+                    <h2><i class="fas fa-laptop-code"></i> Bilişim Suçları Yönetimi</h2>
+                    <button class="btn-primary" id="btn-new-bilisim">
+                        <i class="fas fa-plus"></i> Yeni Kayıt
+                    </button>
+                </div>
+                
+                <div class="data-table-container">
+                    <table class="data-table" id="bilisim-table">
+                        <thead>
+                            <tr>
+                                <th>Dosya No</th>
+                                <th>Ad Soyad</th>
+                                <th>Suç Türü</th>
+                                <th>Zarar Miktarı</th>
+                                <th>Durum</th>
+                                <th>İşlemler</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Veriler JavaScript ile doldurulacak -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Nitelikli Dolandırıcılık -->
+            <section id="dolandiricilik" class="tab-content">
+                <div class="tab-header">
+                    <h2><i class="fas fa-user-secret"></i> Nitelikli Dolandırıcılık Yönetimi</h2>
+                    <button class="btn-primary" id="btn-new-dolandiricilik">
+                        <i class="fas fa-plus"></i> Yeni Kayıt
+                    </button>
+                </div>
+                <p>Nitelikli dolandırıcılık kayıtları burada görüntülenecek...</p>
+            </section>
+
+            <!-- Kredi Kartı Suçları -->
+            <section id="kredi-karti" class="tab-content">
+                <div class="tab-header">
+                    <h2><i class="fas fa-credit-card"></i> Kredi Kartı Suçları Yönetimi</h2>
+                    <button class="btn-primary" id="btn-new-kredi-karti">
+                        <i class="fas fa-plus"></i> Yeni Kayıt
+                    </button>
+                </div>
+                <p>Kredi kartı suçları kayıtları burada görüntülenecek...</p>
+            </section>
+
+            <!-- Mahkeme Kararları -->
+            <section id="mahkeme-kararlari" class="tab-content">
+                <div class="tab-header">
+                    <h2><i class="fas fa-balance-scale"></i> Örnek Mahkeme Kararları</h2>
+                    <div class="header-actions">
+                        <button class="btn-secondary" id="btn-new-karar">
+                            <i class="fas fa-plus"></i> Yeni Karar Ekle
+                        </button>
+                        <div class="search-box">
+                            <input type="text" id="karar-search" placeholder="Karar ara...">
+                            <i class="fas fa-search"></i>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Filtreleme Alanı -->
+                <div class="filters">
+                    <div class="filter-group">
+                        <label for="filter-suç-türü">Suç Türü:</label>
+                        <select id="filter-suç-türü">
+                            <option value="all">Tümü</option>
+                            <option value="Bilişim Suçları">Bilişim Suçları</option>
+                            <option value="Nitelikli Dolandırıcılık">Nitelikli Dolandırıcılık</option>
+                            <option value="Kredi Kartı Suçları">Kredi Kartı Suçları</option>
+                        </select>
+                    </div>
+                    
+                    <div class="filter-group">
+                        <label for="filter-emsal">Emsal Kararlar:</label>
+                        <select id="filter-emsal">
+                            <option value="all">Tümü</option>
+                            <option value="1">Sadece Emsal Kararlar</option>
+                        </select>
+                    </div>
+                    
+                    <div class="filter-group">
+                        <label for="filter-tarih">Tarih Aralığı:</label>
+                        <input type="date" id="filter-tarih-baslangic">
+                        <span> - </span>
+                        <input type="date" id="filter-tarih-bitis">
+                    </div>
+                    
+                    <button class="btn-primary" id="btn-filter">
+                        <i class="fas fa-filter"></i> Filtrele
+                    </button>
+                </div>
+                
+                <!-- Karar Listesi -->
+                <div class="karar-listesi" id="karar-listesi">
+                    <!-- Kararlar buraya yüklenecek -->
+                </div>
+                
+                <!-- Karar Detay Modal -->
+                <div class="modal" id="modal-karar-detay">
+                    <div class="modal-content large-modal">
+                        <div class="modal-header">
+                            <h3 id="modal-karar-baslik">Karar Detayı</h3>
+                            <button class="modal-close">&times;</button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="karar-info-grid">
+                                <div class="info-item">
+                                    <label>Karar No:</label>
+                                    <span id="detay-karar-no"></span>
+                                </div>
+                                <div class="info-item">
+                                    <label>Tarih:</label>
+                                    <span id="detay-karar-tarihi"></span>
+                                </div>
+                                <div class="info-item">
+                                    <label>Mahkeme:</label>
+                                    <span id="detay-mahkeme"></span>
+                                </div>
+                                <div class="info-item">
+                                    <label>Dosya No:</label>
+                                    <span id="detay-dosya-no"></span>
+                                </div>
+                                <div class="info-item">
+                                    <label>Suç Türü:</label>
+                                    <span id="detay-suç-türü"></span>
+                                </div>
+                                <div class="info-item">
+                                    <label>Madde No:</label>
+                                    <span id="detay-madde-no"></span>
+                                </div>
+                                <div class="info-item">
+                                    <label>İlgili Kanun:</label>
+                                    <span id="detay-ilgili-kanun"></span>
+                                </div>
+                            </div>
+                            
+                            <div class="section">
+                                <h4>Özet</h4>
+                                <div class="content-box" id="detay-özet"></div>
+                            </div>
+                            
+                            <div class="section">
+                                <h4>Karar Metni</h4>
+                                <div class="content-box" id="detay-karar-metni"></div>
+                            </div>
+                            
+                            <div class="section">
+                                <h4>Etiketler</h4>
+                                <div id="detay-tags"></div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button class="btn-secondary" id="btn-print-karar">
+                                <i class="fas fa-print"></i> Yazdır
+                            </button>
+                            <button class="btn-secondary" id="btn-export-karar">
+                                <i class="fas fa-download"></i> Dışa Aktar
+                            </button>
+                            <button class="btn-primary" id="btn-use-as-template">
+                                <i class="fas fa-copy"></i> Şablon Olarak Kullan
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Raporlar -->
+            <section id="reports" class="tab-content">
+                <div class="tab-header">
+                    <h2><i class="fas fa-chart-bar"></i> Raporlar</h2>
+                </div>
+                <p>Raporlama özellikleri burada görüntülenecek...</p>
+            </section>
+
+            <!-- Yedekleme -->
+            <section id="backup" class="tab-content">
+                <div class="tab-header">
+                    <h2><i class="fas fa-save"></i> Yedekleme & Geri Yükleme</h2>
+                </div>
+                <p>Yedekleme ve geri yükleme özellikleri burada görüntülenecek...</p>
+            </section>
+        </main>
+
+        <!-- Footer -->
+        <footer class="app-footer">
+            <p>© 2024 Türk Ceza Kanunu Mala Karşı İşlenen Suçlar Editörü v1.0</p>
+            <p class="version">Veritabanı: <span id="db-version">1.0.0</span></p>
+        </footer>
+    </div>
+
+    <!-- JavaScript Dosyaları -->
+    <script src="renderer.js"></script>
+</body>
+</html>
