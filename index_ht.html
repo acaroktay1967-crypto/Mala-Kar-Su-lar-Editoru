@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TCK Mala Karşı İşlenen Suçlar Editörü</title>
+    <link rel="stylesheet" href="styles/main.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="app-header">
+            <div class="logo">
+                <i class="fas fa-balance-scale"></i>
+                <h1>TCK Mala Karşı İşlenen Suçlar Editörü</h1>
+            </div>
+            <div class="status-bar">
+                <span id="connection-status" class="status-connected">
+                    <i class="fas fa-database"></i> Veritabanı Bağlı
+                </span>
+                <span id="record-count">Kayıtlar Yükleniyor...</span>
+            </div>
+        </header>
+
+        <!-- Ana Navigasyon -->
+        <nav class="main-nav">
+            <button class="nav-btn active" data-tab="dashboard">
+                <i class="fas fa-home"></i> Ana Panel
+            </button>
+            <button class="nav-btn" data-tab="bilisim">
+                <i class="fas fa-laptop-code"></i> Bilişim Suçları
+            </button>
+            <button class="nav-btn" data-tab="dolandiricilik">
+                <i class="fas fa-user-secret"></i> Nitelikli Dolandırıcılık
+            </button>
+            <button class="nav-btn" data-tab="kredi-karti">
+                <i class="fas fa-credit-card"></i> Kredi Kartı Suçları
+            </button>
+            <button class="nav-btn" data-tab="reports">
+                <i class="fas fa-chart-bar"></i> Raporlar
+            </button>
+            <button class="nav-btn" data-tab="backup">
+                <i class="fas fa-save"></i> Yedekleme
+            </button>
+        </nav>
+
+        <!-- İçerik Alanları -->
+        <main class="content-area">
+            <!-- Dashboard -->
+            <section id="dashboard" class="tab-content active">
+                <div class="dashboard-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon bilisim">
+                            <i class="fas fa-laptop-code"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3>Bilişim Suçları</h3>
+                            <p class="stat-count" id="count-bilisim">0</p>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon dolandiricilik">
+                            <i class="fas fa-user-secret"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3>Nitelikli Dolandırıcılık</h3>
+                            <p class="stat-count" id="count-dolandiricilik">0</p>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon kredi-karti">
+                            <i class="fas fa-credit-card"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3>Kredi Kartı Suçları</h3>
+                            <p class="stat-count" id="count-kredi-karti">0</p>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon total">
+                            <i class="fas fa-gavel"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3>Toplam Suç Kaydı</h3>
+                            <p class="stat-count" id="count-total">0</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="recent-activity">
+                    <h3><i class="fas fa-history"></i> Son İşlemler</h3>
+                    <div class="activity-list" id="recent-activities">
+                        <!-- Son işlemler buraya yüklenecek -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- Bilişim Suçları -->
+            <section id="bilisim" class="tab-content">
+                <div class="tab-header">
+                    <h2><i class="fas fa-laptop-code"></i> Bilişim Suçları Yönetimi</h2>
+                    <button class="btn-primary" id="btn-new-bilisim">
+                        <i class="fas fa-plus"></i> Yeni Kayıt
+                    </button>
+                </div>
+                
+                <div class="data-table-container">
+                    <table class="data-table" id="bilisim-table">
+                        <thead>
+                            <tr>
+                                <th>Dosya No</th>
+                                <th>Ad Soyad</th>
+                                <th>Suç Türü</th>
+                                <th>Zarar Miktarı</th>
+                                <th>Durum</th>
+                                <th>İşlemler</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Veriler JavaScript ile doldurulacak -->
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- Form Modal (Gerekirse) -->
+                <div class="modal" id="modal-bilisim">
+                    <div class="modal-content">
+                        <h3>Bilişim Suçu Kaydı</h3>
+                        <form id="form-bilisim">
+                            <!-- Form alanları buraya -->
+                        </form>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Diğer tab içerikleri benzer şekilde... -->
+            
+        </main>
+
+        <!-- Footer -->
+        <footer class="app-footer">
+            <p>© 2024 Türk Ceza Kanunu Mala Karşı İşlenen Suçlar Editörü v1.0</p>
+            <p class="version">Veritabanı: <span id="db-version">1.0.0</span></p>
+        </footer>
+    </div>
+
+    <!-- JavaScript Dosyaları -->
+    <script src="src/shared/utils.js"></script>
+    <script src="src/modules/bilisim/bilisim.js"></script>
+    <script src="src/modules/dolandiricilik/dolandiricilik.js"></script>
+    <script src="src/modules/kredi-karti/kredi-karti.js"></script>
+    <script src="src/main.js"></script>
+</body>
+</html>
