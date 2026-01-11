@@ -81,6 +81,7 @@ function showNotification(message, type = 'info') {
 }
 
 function loadTabContent(tabId) {
-    // Her sekme yüklendiğinde çalışacak kod
+    // TODO: Her sekme yüklendiğinde çalışacak kod buraya eklenecek
+    // Şu an için sadece log yazılıyor
     console.log(`Yüklenen sekme: ${tabId}`);
 }
