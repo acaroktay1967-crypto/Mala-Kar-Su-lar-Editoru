@@ -2,7 +2,7 @@
   "name": "mala-karsi-islenen-suclar-editoru",
   "version": "1.0.0",
   "description": "TCK Mala Karşı İşlenen Suçlar Editörü",
-  "main": "main.js",
+  "main": "main-process.js",
   "scripts": {
     "start": "electron .",
     "build": "electron-builder",
