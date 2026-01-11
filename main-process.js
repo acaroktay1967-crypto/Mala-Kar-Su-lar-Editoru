@@ -17,7 +17,7 @@ function createWindow() {
 
   mainWindow.loadFile('app.html');
   
-  // DevTools açık başlat (geliştirme için)
+  // Start with DevTools open (for development) / DevTools açık başlat (geliştirme için)
   mainWindow.webContents.openDevTools();
   
   // IPC Handler'ları

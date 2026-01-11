@@ -122,11 +122,15 @@ async function loadTabContent(tabId) {
 
 async function loadStatistics() {
     try {
-        const [bilisimData, dolandiricilikData, krediKartiData] = await Promise.all([
+        const results = await Promise.allSettled([
             window.api.bilişim.getAll(),
             window.api.dolandırıcılık.getAll(),
             window.api.krediKartı.getAll()
         ]);
+        
+        const bilisimData = results[0].status === 'fulfilled' ? results[0].value : [];
+        const dolandiricilikData = results[1].status === 'fulfilled' ? results[1].value : [];
+        const krediKartiData = results[2].status === 'fulfilled' ? results[2].value : [];
         
         // Update statistics display with animation
         updateStatWithAnimation('count-bilisim', bilisimData.length);
@@ -808,6 +812,7 @@ function editRecord(type, id) {
 }
 
 function deleteRecord(type, id) {
+    // TODO: Implement custom confirmation modal
     if (confirm('Bu kaydı silmek istediğinizden emin misiniz?')) {
         console.log(`Deleting ${type} record:`, id);
         // Implementation for deleting records
