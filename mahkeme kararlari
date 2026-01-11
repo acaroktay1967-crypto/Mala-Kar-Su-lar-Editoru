@@ -1,0 +1,289 @@
+class MahkemeKararlariManager {
+  constructor() {
+    this.currentFilter = {
+      suçTürü: 'all',
+      emsal: 'all',
+      tarihBaslangic: '',
+      tarihBitis: ''
+    };
+    
+    this.initializeEventListeners();
+    this.loadKararlar();
+  }
+  
+  initializeEventListeners() {
+    // Filtreleme butonu
+    document.getElementById('btn-filter').addEventListener('click', () => {
+      this.applyFilters();
+    });
+    
+    // Arama kutusu
+    document.getElementById('karar-search').addEventListener('input', (e) => {
+      this.searchKararlar(e.target.value);
+    });
+    
+    // Suç türü filtresi
+    document.getElementById('filter-suç-türü').addEventListener('change', (e) => {
+      this.currentFilter.suçTürü = e.target.value;
+      this.applyFilters();
+    });
+    
+    // Yeni karar butonu
+    document.getElementById('btn-new-karar')?.addEventListener('click', () => {
+      this.openKararForm();
+    });
+  }
+  
+  async loadKararlar() {
+    try {
+      const kararlar = await window.api.mahkemeKararlari.getAll();
+      this.renderKararListesi(kararlar);
+    } catch (error) {
+      console.error('Kararlar yüklenirken hata:', error);
+      this.showError('Kararlar yüklenirken bir hata oluştu.');
+    }
+  }
+  
+  async searchKararlar(keyword) {
+    if (keyword.length < 2) {
+      this.loadKararlar();
+      return;
+    }
+    
+    try {
+      const kararlar = await window.api.mahkemeKararlari.search(keyword);
+      this.renderKararListesi(kararlar);
+    } catch (error) {
+      console.error('Arama sırasında hata:', error);
+    }
+  }
+  
+  async applyFilters() {
+    try {
+      let kararlar = await window.api.mahkemeKararlari.getAll();
+      
+      // Suç türü filtresi
+      if (this.currentFilter.suçTürü !== 'all') {
+        kararlar = kararlar.filter(k => k.suç_türü === this.currentFilter.suçTürü);
+      }
+      
+      // Emsal karar filtresi
+      if (this.currentFilter.emsal === '1') {
+        kararlar = kararlar.filter(k => k.emsal_niteliği === 1);
+      }
+      
+      // Tarih filtresi
+      if (this.currentFilter.tarihBaslangic) {
+        const baslangic = new Date(this.currentFilter.tarihBaslangic);
+        kararlar = kararlar.filter(k => new Date(k.karar_tarihi) >= baslangic);
+      }
+      
+      if (this.currentFilter.tarihBitis) {
+        const bitis = new Date(this.currentFilter.tarihBitis);
+        kararlar = kararlar.filter(k => new Date(k.karar_tarihi) <= bitis);
+      }
+      
+      this.renderKararListesi(kararlar);
+    } catch (error) {
+      console.error('Filtreleme sırasında hata:', error);
+    }
+  }
+  
+  renderKararListesi(kararlar) {
+    const container = document.getElementById('karar-listesi');
+    
+    if (kararlar.length === 0) {
+      container.innerHTML = `
+        <div class="empty-state">
+          <i class="fas fa-balance-scale"></i>
+          <h3>Karar Bulunamadı</h3>
+          <p>Henüz kayıtlı mahkeme kararı bulunmamaktadır.</p>
+        </div>
+      `;
+      return;
+    }
+    
+    let html = '';
+    
+    kararlar.forEach(karar => {
+      html += `
+        <div class="karar-karti ${karar.emsal_niteliği ? 'emsal' : ''}" data-id="${karar.id}">
+          <div class="karar-karti-header">
+            <h3>${karar.karar_no}</h3>
+            ${karar.emsal_niteliği ? '<span class="emsal-badge">Emsal Karar</span>' : ''}
+          </div>
+          
+          <div class="karar-meta">
+            <div class="karar-meta-item">
+              <i class="far fa-calendar"></i>
+              <span>${this.formatDate(karar.karar_tarihi)}</span>
+            </div>
+            <div class="karar-meta-item">
+              <i class="fas fa-gavel"></i>
+              <span>${karar.mahkeme_adı}</span>
+            </div>
+            <div class="karar-meta-item">
+              <i class="fas fa-scale-balanced"></i>
+              <span>${karar.suç_türü}</span>
+            </div>
+          </div>
+          
+          <div class="karar-özet" id="özet-${karar.id}">
+            ${this.truncateText(karar.özet, 150)}
+          </div>
+          
+          ${karar.özet.length > 150 ? `<span class="read-more" data-id="${karar.id}">Devamını oku</span>` : ''}
+          
+          ${karar.tags ? `
+            <div class="karar-tags">
+              ${karar.tags.split(',').map(tag => `<span class="tag">${tag.trim()}</span>`).join('')}
+            </div>
+          ` : ''}
+        </div>
+      `;
+    });
+    
+    container.innerHTML = html;
+    
+    // Kartlara tıklama olayları ekle
+    document.querySelectorAll('.karar-karti').forEach(kart => {
+      kart.addEventListener('click', (e) => {
+        if (!e.target.classList.contains('read-more')) {
+          const kararId = kart.getAttribute('data-id');
+          this.showKararDetay(kararId);
+        }
+      });
+    });
+    
+    // Devamını oku butonları
+    document.querySelectorAll('.read-more').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const kararId = btn.getAttribute('data-id');
+        const özetElement = document.getElementById(`özet-${kararId}`);
+        
+        if (özetElement.classList.contains('expanded')) {
+          özetElement.classList.remove('expanded');
+          btn.textContent = 'Devamını oku';
+          özetElement.textContent = this.truncateText(özetElement.getAttribute('data-full-text'), 150);
+        } else {
+          const karar = kararlar.find(k => k.id === kararId);
+          özetElement.setAttribute('data-full-text', karar.özet);
+          özetElement.textContent = karar.özet;
+          özetElement.classList.add('expanded');
+          btn.textContent = 'Daha az göster';
+        }
+      });
+    });
+  }
+  
+  async showKararDetay(kararId) {
+    try {
+      const kararlar = await window.api.mahkemeKararlari.getAll();
+      const karar = kararlar.find(k => k.id === kararId);
+      
+      if (!karar) return;
+      
+      // Modal içeriğini doldur
+      document.getElementById('modal-karar-baslik').textContent = `Karar: ${karar.karar_no}`;
+      document.getElementById('detay-karar-no').textContent = karar.karar_no;
+      document.getElementById('detay-karar-tarihi').textContent = this.formatDate(karar.karar_tarihi);
+      document.getElementById('detay-mahkeme').textContent = karar.mahkeme_adı;
+      document.getElementById('detay-dosya-no').textContent = karar.dosya_no || '-';
+      document.getElementById('detay-suç-türü').textContent = karar.suç_türü;
+      document.getElementById('detay-madde-no').textContent = karar.madde_no || '-';
+      document.getElementById('detay-ilgili-kanun').textContent = karar.ilgili_kanun || '-';
+      document.getElementById('detay-özet').textContent = karar.özet;
+      document.getElementById('detay-karar-metni').textContent = karar.karar_metni;
+      
+      // Etiketler
+      const tagsContainer = document.getElementById('detay-tags');
+      if (karar.tags) {
+        tagsContainer.innerHTML = karar.tags.split(',').map(tag => 
+          `<span class="tag">${tag.trim()}</span>`
+        ).join('');
+      } else {
+        tagsContainer.innerHTML = '<span>-</span>';
+      }
+      
+      // Modalı göster
+      const modal = document.getElementById('modal-karar-detay');
+      modal.style.display = 'block';
+      
+      // Modal kapatma işleyicisi
+      modal.querySelector('.modal-close').addEventListener('click', () => {
+        modal.style.display = 'none';
+      });
+      
+      // Şablon olarak kullan butonu
+      document.getElementById('btn-use-as-template').addEventListener('click', () => {
+        this.useKararAsTemplate(karar);
+      });
+      
+    } catch (error) {
+      console.error('Karar detayı yüklenirken hata:', error);
+      this.showError('Karar detayı yüklenirken bir hata oluştu.');
+    }
+  }
+  
+  useKararAsTemplate(karar) {
+    // Bu fonksiyon kararı şablon olarak kullanıp yeni kayıt oluşturmayı sağlar
+    const newKarar = {
+      ...karar,
+      id: null,
+      karar_no: `${karar.karar_no}_KOPYA`,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
+    
+    // Karar formunu aç ve şablonu yükle
+    this.openKararForm(newKarar);
+  }
+  
+  openKararForm(kararData = null) {
+    // Karar formu modalını aç
+    // Mevcut kayıt düzenleme veya yeni kayıt formu
+    console.log('Karar formu açılıyor:', kararData);
+    // Bu kısım ayrıntılı form kodlarını gerektirir
+  }
+  
+  formatDate(dateString) {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('tr-TR', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+  }
+  
+  truncateText(text, maxLength) {
+    if (text.length <= maxLength) return text;
+    return text.substr(0, maxLength) + '...';
+  }
+  
+  showError(message) {
+    // Hata mesajı göster
+    alert(message);
+  }
+}
+
+// Sekme yüklendiğinde manager'ı başlat
+document.addEventListener('DOMContentLoaded', () => {
+  const kararlarTab = document.getElementById('mahkeme-kararlari');
+  
+  if (kararlarTab && kararlarTab.classList.contains('active')) {
+    new MahkemeKararlariManager();
+  }
+  
+  // Tab değiştiğinde de manager'ı başlat
+  document.querySelectorAll('.nav-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const tabId = btn.getAttribute('data-tab');
+      if (tabId === 'mahkeme-kararlari') {
+        setTimeout(() => {
+          new MahkemeKararlariManager();
+        }, 100);
+      }
+    });
+  });
+});
