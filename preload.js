@@ -20,6 +20,15 @@ contextBridge.exposeInMainWorld('api', {
     save: (data) => ipcRenderer.invoke('kredi-kartı:save', data)
   },
   
+  // Mahkeme Kararları
+  mahkemeKararlari: {
+    getAll: () => ipcRenderer.invoke('mahkeme-kararlari:getAll'),
+    getBySuçTürü: (suçTürü) => ipcRenderer.invoke('mahkeme-kararlari:getBySuçTürü', suçTürü),
+    search: (keyword) => ipcRenderer.invoke('mahkeme-kararlari:search', keyword),
+    save: (data) => ipcRenderer.invoke('mahkeme-kararlari:save', data),
+    delete: (id) => ipcRenderer.invoke('mahkeme-kararlari:delete', id)
+  },
+  
   // Yedekleme
   backup: {
     create: () => ipcRenderer.invoke('backup:create'),
