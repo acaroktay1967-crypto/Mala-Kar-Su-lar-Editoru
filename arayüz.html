@@ -1,0 +1,38 @@
+<!-- Filtreleme Alanına Yargıtay Filtresi Ekleyelim -->
+<div class="filters">
+  <div class="filter-group">
+    <label for="filter-suç-türü">Suç Türü:</label>
+    <select id="filter-suç-türü">
+      <option value="all">Tümü</option>
+      <option value="Bilişim Suçları">Bilişim Suçları</option>
+      <option value="Nitelikli Dolandırıcılık">Nitelikli Dolandırıcılık</option>
+      <option value="Kredi Kartı Suçları">Kredi Kartı Suçları</option>
+    </select>
+  </div>
+  
+  <div class="filter-group">
+    <label for="filter-mahkeme-turu">Mahkeme Türü:</label>
+    <select id="filter-mahkeme-turu">
+      <option value="all">Tümü</option>
+      <option value="Yargıtay">Yargıtay Kararları</option>
+      <option value="Ağır Ceza">Ağır Ceza Mahkemesi</option>
+      <option value="Asliye">Asliye Ceza Mahkemesi</option>
+    </select>
+  </div>
+  
+  <div class="filter-group">
+    <label for="filter-emsal">Emsal Kararlar:</label>
+    <select id="filter-emsal">
+      <option value="all">Tümü</option>
+      <option value="1">Sadece Emsal Kararlar</option>
+    </select>
+  </div>
+  
+  <button class="btn-primary" id="btn-filter">
+    <i class="fas fa-filter"></i> Filtrele
+  </button>
+  
+  <button class="btn-secondary" id="btn-yargitay-tumu">
+    <i class="fas fa-balance-scale"></i> Tüm Yargıtay Kararları
+  </button>
+</div>
