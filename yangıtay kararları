@@ -1,0 +1,56 @@
+// Gelişmiş Yargıtay karar arama fonksiyonu
+async advancedYargitaySearch(criteria) {
+  return new Promise((resolve, reject) => {
+    const {
+      keyword = '',
+      suçTürü = '',
+      maddeNo = '',
+      startDate = '',
+      endDate = '',
+      emsalOnly = false
+    } = criteria;
+    
+    let query = `
+      SELECT * FROM mahkeme_kararlari 
+      WHERE mahkeme_adı LIKE '%Yargıtay%'
+    `;
+    
+    const params = [];
+    
+    if (keyword) {
+      query += ` AND (karar_no LIKE ? OR özet LIKE ? OR karar_metni LIKE ?)`;
+      params.push(`%${keyword}%`, `%${keyword}%`, `%${keyword}%`);
+    }
+    
+    if (suçTürü) {
+      query += ` AND suç_türü = ?`;
+      params.push(suçTürü);
+    }
+    
+    if (maddeNo) {
+      query += ` AND madde_no LIKE ?`;
+      params.push(`%${maddeNo}%`);
+    }
+    
+    if (startDate) {
+      query += ` AND karar_tarihi >= ?`;
+      params.push(startDate);
+    }
+    
+    if (endDate) {
+      query += ` AND karar_tarihi <= ?`;
+      params.push(endDate);
+    }
+    
+    if (emsalOnly) {
+      query += ` AND emsal_niteliği = 1`;
+    }
+    
+    query += ` ORDER BY karar_tarihi DESC`;
+    
+    this.db.all(query, params, (err, rows) => {
+      if (err) reject(err);
+      else resolve(rows);
+    });
+  });
+}
