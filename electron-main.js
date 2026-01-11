@@ -1,13 +1,13 @@
 const { app, BrowserWindow, ipcMain, Menu, dialog } = require('electron');
 const path = require('path');
 const fs = require('fs');
-const Database = require('./src/database/db');
+const Database = require('./database');
 
 let mainWindow;
 let db;
 
 function createWindow() {
-  mainWindow = new BrowserWindow({
+  const windowOptions = {
     width: 1400,
     height: 900,
     webPreferences: {
@@ -15,14 +15,23 @@ function createWindow() {
       contextIsolation: true,
       preload: path.join(__dirname, 'preload.js')
     },
-    icon: path.join(__dirname, 'assets/icon.ico'),
     title: 'TCK Mala Karşı İşlenen Suçlar Editörü v1.0'
-  });
+  };
 
-  mainWindow.loadFile('index.html');
+  // Add icon if it exists
+  const iconPath = path.join(__dirname, 'assets/icon.ico');
+  if (fs.existsSync(iconPath)) {
+    windowOptions.icon = iconPath;
+  }
+
+  mainWindow = new BrowserWindow(windowOptions);
+
+  mainWindow.loadFile('index_ht.html');
   
-  // DevTools açık başlat (geliştirme için)
-  mainWindow.webContents.openDevTools();
+  // Open DevTools in development mode
+  if (process.argv.includes('--debug')) {
+    mainWindow.webContents.openDevTools();
+  }
   
   // Veritabanını başlat
   db = new Database();
