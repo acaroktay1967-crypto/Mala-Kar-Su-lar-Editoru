@@ -523,6 +523,120 @@ class Database {
     });
   }
 
+  async deleteBilişimSuçu(id) {
+    return new Promise((resolve, reject) => {
+      this.db.run("DELETE FROM bilişim_suclari WHERE id = ?", [id], function(err) {
+        if (err) reject(err);
+        else resolve({ success: true, changes: this.changes });
+      });
+    });
+  }
+
+  // Nitelikli Dolandırıcılık İşlemleri
+  async getAllDolandırıcılık() {
+    return new Promise((resolve, reject) => {
+      this.db.all("SELECT * FROM nitelikli_dolandırıcılık ORDER BY created_at DESC", (err, rows) => {
+        if (err) reject(err);
+        else resolve(rows);
+      });
+    });
+  }
+
+  async saveDolandırıcılık(data) {
+    return new Promise((resolve, reject) => {
+      const id = data.id || uuidv4();
+      const now = new Date().toISOString();
+      
+      const stmt = this.db.prepare(`
+        INSERT OR REPLACE INTO nitelikli_dolandırıcılık 
+        (id, suç_türü, mağdur_sayısı, toplam_zarar, organize_suç, 
+         meslek_kötüye_kullanımı, güven_sömürüsü, diğer_nitelikler, dosya_detayları, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `);
+      
+      stmt.run([
+        id, data.suç_türü, data.mağdur_sayısı, data.toplam_zarar, data.organize_suç,
+        data.meslek_kötüye_kullanımı, data.güven_sömürüsü, data.diğer_nitelikler,
+        data.dosya_detayları, now
+      ], function(err) {
+        if (err) reject(err);
+        else resolve({ id, success: true });
+      });
+      
+      stmt.finalize();
+    });
+  }
+
+  // Kredi Kartı Suçları İşlemleri
+  async getAllKrediKartıSuclari() {
+    return new Promise((resolve, reject) => {
+      this.db.all("SELECT * FROM kredi_kartı_suclari ORDER BY created_at DESC", (err, rows) => {
+        if (err) reject(err);
+        else resolve(rows);
+      });
+    });
+  }
+
+  async saveKrediKartıSuçu(data) {
+    return new Promise((resolve, reject) => {
+      const id = data.id || uuidv4();
+      const now = new Date().toISOString();
+      
+      const stmt = this.db.prepare(`
+        INSERT OR REPLACE INTO kredi_kartı_suclari 
+        (id, kart_sahibi, kart_numarası, son_kullanma, guvenlik_kodu, sahtecilik_türü,
+         işlem_tarihi, işlem_tutarı, işlem_yeri, şüpheli_bilgiler, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `);
+      
+      stmt.run([
+        id, data.kart_sahibi, data.kart_numarası, data.son_kullanma, data.guvenlik_kodu,
+        data.sahtecilik_türü, data.işlem_tarihi, data.işlem_tutarı, data.işlem_yeri,
+        data.şüpheli_bilgiler, now
+      ], function(err) {
+        if (err) reject(err);
+        else resolve({ id, success: true });
+      });
+      
+      stmt.finalize();
+    });
+  }
+
+  // Mahkeme Kararları İşlemleri
+  async saveMahkemeKarari(data) {
+    return new Promise((resolve, reject) => {
+      const id = data.id || uuidv4();
+      const now = new Date().toISOString();
+      
+      const stmt = this.db.prepare(`
+        INSERT OR REPLACE INTO mahkeme_kararlari 
+        (id, suç_türü, dosya_no, mahkeme, karar_tarihi, karar_no, emsal, 
+         karar_özeti, karar_metni, taraflar, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `);
+      
+      stmt.run([
+        id, data.suç_türü, data.dosya_no, data.mahkeme, data.karar_tarihi,
+        data.karar_no, data.emsal, data.karar_özeti, data.karar_metni,
+        data.taraflar, now
+      ], function(err) {
+        if (err) reject(err);
+        else resolve({ id, success: true });
+      });
+      
+      stmt.finalize();
+    });
+  }
+
+  async deleteMahkemeKarari(id) {
+    return new Promise((resolve, reject) => {
+      this.db.run("DELETE FROM mahkeme_kararlari WHERE id = ?", [id], function(err) {
+        if (err) reject(err);
+        else resolve({ success: true, changes: this.changes });
+      });
+    });
+  }
+
   // Yedekleme İşlemleri
   async createBackup() {
     const backupFile = path.join(this.backupPath, `backup_${Date.now()}.db`);
@@ -531,6 +645,15 @@ class Database {
       fs.copyFile(this.dbPath, backupFile, (err) => {
         if (err) reject(err);
         else resolve({ success: true, file: backupFile });
+      });
+    });
+  }
+
+  async restoreBackup(backupFile) {
+    return new Promise((resolve, reject) => {
+      fs.copyFile(backupFile, this.dbPath, (err) => {
+        if (err) reject(err);
+        else resolve({ success: true });
       });
     });
   }
