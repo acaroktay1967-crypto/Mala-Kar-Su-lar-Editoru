@@ -1,0 +1,41 @@
+[
+  {
+    "karar_no": "Yargıtay 15. Ceza Dairesi 2023/1234 E., 2023/5678 K.",
+    "karar_tarihi": "2023-05-15",
+    "mahkeme_adı": "Yargıtay 15. Ceza Dairesi",
+    "dosya_no": "2023/1234",
+    "suç_türü": "Bilişim Suçları",
+    "madde_no": "TCK 244/3",
+    "özet": "Kişisel verilerin izinsiz olarak yayınlanması suçu",
+    "karar_metni": "Sanığın, mağdura ait özel nitelikteki kişisel verileri internet ortamında izinsiz olarak yayınlaması nedeniyle TCK 244/3 maddesi uyarınca cezalandırılmasına karar verilmiştir. Kişisel verilerin korunması hakkının ihlal edildiği tespit edilmiştir.",
+    "emsal_niteliği": 1,
+    "ilgili_kanun": "TCK 244, KVKK",
+    "tags": "kişisel veri, yayınlama, internet, mahkumiyet"
+  },
+  {
+    "karar_no": "Yargıtay 8. Ceza Dairesi 2023/7890 E., 2023/1011 K.",
+    "karar_tarihi": "2023-08-20",
+    "mahkeme_adı": "Yargıtay 8. Ceza Dairesi",
+    "dosya_no": "2023/7890",
+    "suç_türü": "Nitelikli Dolandırıcılık",
+    "madde_no": "TCK 158/1-k",
+    "özet": "Elektronik ticaret yoluyla dolandırıcılık",
+    "karar_metni": "Sanığın, internet üzerinden sahte e-ticaret sitesi kurarak müşterilerin para transferi yapmasını sağladıktan sonra ürün göndermediği, bu şekilde çok sayıda kişiyi dolandırdığı tespit edilmiştir. TCK 158/1-k maddesi uyarınca bilişim sistemleri kullanılmak suretiyle dolandırıcılık suçundan mahkumiyet kararı verilmiştir.",
+    "emsal_niteliği": 1,
+    "ilgili_kanun": "TCK 158, Elektronik Ticaret Kanunu",
+    "tags": "e-ticaret, dolandırıcılık, sahte site, internet"
+  },
+  {
+    "karar_no": "Yargıtay 11. Ceza Dairesi 2023/3456 E., 2023/7891 K.",
+    "karar_tarihi": "2023-11-10",
+    "mahkeme_adı": "Yargıtay 11. Ceza Dairesi",
+    "dosya_no": "2023/3456",
+    "suç_türü": "Kredi Kartı Suçları",
+    "madde_no": "TCK 245/4",
+    "özet": "Sahte kredi kartı üretimi ve kullanımı",
+    "karar_metni": "Sanıkların organize bir şekilde sahte kredi kartları üreterek kullandıkları, bu kartlarla yüksek meblağlı alışverişler yaptıkları tespit edilmiştir. TCK 245/4 maddesi kapsamında organize şekilde işlenen kredi kartı suçundan ağırlaştırılmış cezaya hükmedilmiştir.",
+    "emsal_niteliği": 0,
+    "ilgili_kanun": "TCK 245, Bankacılık Kanunu",
+    "tags": "sahte kart, organize suç, kredi kartı, bankacılık"
+  }
+]
