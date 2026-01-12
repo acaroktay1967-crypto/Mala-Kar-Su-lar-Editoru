@@ -2,7 +2,7 @@
 
 ## TCK Mala Karşı İşlenen Suçlar Editörü
 
-Türk Ceza Kanunu kapsamında mala karşı işlenen suçların yönetimi ve analizi için geliştirilmiş gelişmiş metin editörü uygulaması.
+Türk Ceza Kanunu kapsamında mala karşı işlenen suçların yönetimi ve analizi için geliştirilmiş metin editörü uygulaması.
 
 ## Özellikler
 
