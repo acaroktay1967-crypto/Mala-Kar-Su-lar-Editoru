@@ -105,6 +105,46 @@ function setupIpcHandlers() {
         return { success: false, message: 'Dosya formatı hatalı. JSON dizisi bekleniyor.' };
       }
 
+      // Validate each decision has required fields
+      const validateKarar = (karar, index) => {
+        const requiredFields = ['karar_no', 'karar_tarihi', 'mahkeme_adı', 'suç_türü'];
+        const missingFields = requiredFields.filter(field => !karar[field]);
+        
+        if (missingFields.length > 0) {
+          return {
+            valid: false,
+            error: `Karar ${index + 1}: Gerekli alanlar eksik - ${missingFields.join(', ')}`
+          };
+        }
+        
+        // Validate date format (YYYY-MM-DD)
+        const datePattern = /^\d{4}-\d{2}-\d{2}$/;
+        if (!datePattern.test(karar.karar_tarihi)) {
+          return {
+            valid: false,
+            error: `Karar ${index + 1}: Tarih formatı hatalı (YYYY-MM-DD formatında olmalı)`
+          };
+        }
+        
+        return { valid: true };
+      };
+
+      // Validate all decisions before importing
+      const validationErrors = [];
+      for (let i = 0; i < kararlar.length; i++) {
+        const validation = validateKarar(kararlar[i], i);
+        if (!validation.valid) {
+          validationErrors.push(validation.error);
+        }
+      }
+
+      if (validationErrors.length > 0) {
+        return {
+          success: false,
+          message: 'Dosya doğrulama hatası:\n' + validationErrors.join('\n')
+        };
+      }
+
       let successCount = 0;
       let errorCount = 0;
 

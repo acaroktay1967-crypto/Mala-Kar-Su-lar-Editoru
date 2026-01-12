@@ -119,22 +119,51 @@ class Database {
       `;
 
       this.db.serialize(() => {
+        let tablesCreated = 0;
+        const totalTables = 4;
+        const errors = [];
+        
+        const checkCompletion = () => {
+          tablesCreated++;
+          if (tablesCreated === totalTables) {
+            if (errors.length > 0) {
+              reject(new Error(`Failed to create tables: ${errors.join(', ')}`));
+            } else {
+              resolve();
+            }
+          }
+        };
+        
         this.db.run(bilişimTable, (err) => {
-          if (err) console.error('Error creating bilişim_suclari table:', err);
+          if (err) {
+            console.error('Error creating bilişim_suclari table:', err);
+            errors.push('bilişim_suclari');
+          }
+          checkCompletion();
         });
+        
         this.db.run(dolandırıcılıkTable, (err) => {
-          if (err) console.error('Error creating nitelikli_dolandırıcılık table:', err);
+          if (err) {
+            console.error('Error creating nitelikli_dolandırıcılık table:', err);
+            errors.push('nitelikli_dolandırıcılık');
+          }
+          checkCompletion();
         });
+        
         this.db.run(krediKartıTable, (err) => {
-          if (err) console.error('Error creating kredi_kartı_suclari table:', err);
+          if (err) {
+            console.error('Error creating kredi_kartı_suclari table:', err);
+            errors.push('kredi_kartı_suclari');
+          }
+          checkCompletion();
         });
+        
         this.db.run(mahkemeKararlariTable, (err) => {
           if (err) {
             console.error('Error creating mahkeme_kararlari table:', err);
-            reject(err);
-          } else {
-            resolve();
+            errors.push('mahkeme_kararlari');
           }
+          checkCompletion();
         });
       });
     });
