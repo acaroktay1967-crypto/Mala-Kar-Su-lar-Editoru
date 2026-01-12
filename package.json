@@ -6,7 +6,9 @@
   "scripts": {
     "start": "electron .",
     "build": "electron-builder",
-    "dev": "electron . --debug"
+    "dev": "electron . --debug",
+    "lint": "eslint *.js --fix",
+    "test": "echo \"No tests configured yet\" && exit 0"
   },
   "dependencies": {
     "electron": "^25.0.0",
@@ -17,7 +19,8 @@
   },
   "devDependencies": {
     "electron-builder": "^24.6.4",
-    "electron-reload": "^1.5.0"
+    "electron-reload": "^1.5.0",
+    "eslint": "^8.50.0"
   },
   "author": "Your Name",
   "license": "MIT",
