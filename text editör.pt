@@ -2,11 +2,11 @@
 # -*- coding: utf-8 -*-
 """
 Tkinter Metin Editörü Modülü
-Punto, yazı tipi, Unicode, kopyala/yapıştır, kaydet, yazdır özellikleri
+Punto, yazı tipi, Unicode, kopyala/yapıştır, kaydet, yazdır, renk özellikleri
 """
 
 import tkinter as tk
-from tkinter import ttk, filedialog, messagebox, font
+from tkinter import ttk, filedialog, messagebox, font, colorchooser
 import json
 import os
 from pathlib import Path
@@ -22,6 +22,7 @@ class TextEditorTk:
         self.current_font_family = "Arial"
         self.is_bold = False
         self.is_italic = False
+        self.current_color = "#000000"  # Varsayılan siyah renk
         
         self.create_widgets()
         self.create_menu()
@@ -134,6 +135,18 @@ class TextEditorTk:
             command=self.decrease_font
         ).pack(side=tk.LEFT, padx=(0, 20))
         
+        # Renk seçici
+        ttk.Label(self.toolbar_frame, text="Yazı Rengi:").pack(side=tk.LEFT, padx=(0, 2))
+        
+        self.color_btn = tk.Button(
+            self.toolbar_frame,
+            text="   ",
+            width=3,
+            bg=self.current_color,
+            command=self.change_text_color
+        )
+        self.color_btn.pack(side=tk.LEFT, padx=(0, 10))
+        
         # Unicode kontrolü
         self.unicode_btn = ttk.Checkbutton(
             self.toolbar_frame,
@@ -179,6 +192,7 @@ class TextEditorTk:
         menubar.add_cascade(label="Biçim", menu=format_menu)
         
         format_menu.add_command(label="Yazı Tipi...", command=self.select_font)
+        format_menu.add_command(label="Yazı Rengi...", command=self.change_text_color)
         format_menu.add_command(label="Paragraf...", command=self.format_paragraph)
         
         # Görünüm menüsü
@@ -367,6 +381,37 @@ class TextEditorTk:
         self.is_italic = not self.is_italic
         self.update_text_font()
         self.update_button_states()
+    
+    def change_text_color(self):
+        """Yazı rengini değiştir"""
+        # Renk seçici aç
+        color = colorchooser.askcolor(
+            title="Yazı Rengi Seçin",
+            initialcolor=self.current_color
+        )
+        
+        if color[1]:  # Kullanıcı bir renk seçtiyse
+            self.current_color = color[1]
+            self.color_btn.config(bg=self.current_color)
+            
+            # Seçili metne renk uygula
+            try:
+                # Seçili metin varsa
+                start = self.text_area.index("sel.first")
+                end = self.text_area.index("sel.last")
+                
+                # Benzersiz bir tag oluştur
+                tag_name = f"color_{self.current_color.replace('#', '')}"
+                
+                # Tag'i yapılandır
+                self.text_area.tag_configure(tag_name, foreground=self.current_color)
+                
+                # Tag'i seçili metne uygula
+                self.text_area.tag_add(tag_name, start, end)
+                
+            except tk.TclError:
+                # Seçili metin yoksa, gelecekteki yazılar için rengi ayarla
+                self.text_area.config(fg=self.current_color)
     
     def update_button_states(self):
         """Buton durumlarını günceller"""
