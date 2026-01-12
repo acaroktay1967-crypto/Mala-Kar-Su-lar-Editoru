@@ -30,6 +30,20 @@ contextBridge.exposeInMainWorld('api', {
   report: {
     generate: (options) => ipcRenderer.invoke('report:generate', options)
   },
+
+  // Mahkeme Kararları
+  mahkemeKararlari: {
+    getAll: () => ipcRenderer.invoke('mahkeme-kararlari:getAll'),
+    save: (data) => ipcRenderer.invoke('mahkeme-kararlari:save', data),
+    search: (keyword) => ipcRenderer.invoke('mahkeme-kararlari:search', keyword),
+    delete: (id) => ipcRenderer.invoke('mahkeme-kararlari:delete', id),
+    importFromFile: (filePath) => ipcRenderer.invoke('mahkeme-kararlari:import', filePath)
+  },
+
+  // Dosya seçici
+  dialog: {
+    showOpenDialog: (options) => ipcRenderer.invoke('dialog:showOpenDialog', options)
+  },
   
   // Menü olayları
   onMenuEvent: (channel, callback) => {

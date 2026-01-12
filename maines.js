@@ -1,7 +1,7 @@
 const { app, BrowserWindow, ipcMain, Menu, dialog } = require('electron');
 const path = require('path');
 const fs = require('fs');
-const Database = require('./src/database/db');
+const Database = require('./database');
 
 let mainWindow;
 let db;
@@ -77,6 +77,103 @@ function setupIpcHandlers() {
   // Rapor Alma
   ipcMain.handle('report:generate', async (event, options) => {
     return await db.generateReport(options);
+  });
+
+  // Mahkeme Kararları
+  ipcMain.handle('mahkeme-kararlari:getAll', async () => {
+    return await db.getAllMahkemeKararlari();
+  });
+
+  ipcMain.handle('mahkeme-kararlari:save', async (event, data) => {
+    return await db.saveMahkemeKarari(data);
+  });
+
+  ipcMain.handle('mahkeme-kararlari:search', async (event, keyword) => {
+    return await db.searchMahkemeKararlari(keyword);
+  });
+
+  ipcMain.handle('mahkeme-kararlari:delete', async (event, id) => {
+    return await db.deleteMahkemeKarari(id);
+  });
+
+  ipcMain.handle('mahkeme-kararlari:import', async (event, filePath) => {
+    try {
+      const fileContent = fs.readFileSync(filePath, 'utf-8');
+      const kararlar = JSON.parse(fileContent);
+      
+      if (!Array.isArray(kararlar)) {
+        return { success: false, message: 'Dosya formatı hatalı. JSON dizisi bekleniyor.' };
+      }
+
+      // Validate each decision has required fields
+      const validateKarar = (karar, index) => {
+        const requiredFields = ['karar_no', 'karar_tarihi', 'mahkeme_adı', 'suç_türü'];
+        const missingFields = requiredFields.filter(field => !karar[field]);
+        
+        if (missingFields.length > 0) {
+          return {
+            valid: false,
+            error: `Karar ${index + 1}: Gerekli alanlar eksik - ${missingFields.join(', ')}`
+          };
+        }
+        
+        // Validate date format (YYYY-MM-DD)
+        const datePattern = /^\d{4}-\d{2}-\d{2}$/;
+        if (!datePattern.test(karar.karar_tarihi)) {
+          return {
+            valid: false,
+            error: `Karar ${index + 1}: Tarih formatı hatalı (YYYY-MM-DD formatında olmalı)`
+          };
+        }
+        
+        return { valid: true };
+      };
+
+      // Validate all decisions before importing
+      const validationErrors = [];
+      for (let i = 0; i < kararlar.length; i++) {
+        const validation = validateKarar(kararlar[i], i);
+        if (!validation.valid) {
+          validationErrors.push(validation.error);
+        }
+      }
+
+      if (validationErrors.length > 0) {
+        return {
+          success: false,
+          message: 'Dosya doğrulama hatası:\n' + validationErrors.join('\n')
+        };
+      }
+
+      let successCount = 0;
+      let errorCount = 0;
+
+      for (const karar of kararlar) {
+        try {
+          await db.saveMahkemeKarari(karar);
+          successCount++;
+        } catch (error) {
+          console.error('Karar kaydedilemedi:', error);
+          errorCount++;
+        }
+      }
+
+      return {
+        success: true,
+        message: `${successCount} karar başarıyla eklendi${errorCount > 0 ? `, ${errorCount} karar eklenemedi` : ''}.`,
+        imported: successCount,
+        failed: errorCount
+      };
+    } catch (error) {
+      console.error('Dosya okuma hatası:', error);
+      return { success: false, message: 'Dosya okunamadı veya parse edilemedi: ' + error.message };
+    }
+  });
+
+  // Dosya seçici dialog
+  ipcMain.handle('dialog:showOpenDialog', async (event, options) => {
+    const result = await dialog.showOpenDialog(mainWindow, options);
+    return result;
   });
 }
 
