@@ -32,6 +32,11 @@ class MahkemeKararlariManager {
     document.getElementById('btn-new-karar')?.addEventListener('click', () => {
       this.openKararForm();
     });
+
+    // Dosyadan yükle butonu
+    document.getElementById('btn-import-karar')?.addEventListener('click', () => {
+      this.importFromFile();
+    });
   }
   
   async loadKararlar() {
@@ -246,6 +251,43 @@ class MahkemeKararlariManager {
     console.log('Karar formu açılıyor:', kararData);
     // Bu kısım ayrıntılı form kodlarını gerektirir
   }
+
+  async importFromFile() {
+    try {
+      // Dosya seçici dialog'unu aç
+      const result = await window.api.dialog.showOpenDialog({
+        title: 'Yargıtay Kararları Dosyası Seç',
+        filters: [
+          { name: 'JSON Dosyaları', extensions: ['json'] },
+          { name: 'Tüm Dosyalar', extensions: ['*'] }
+        ],
+        properties: ['openFile']
+      });
+
+      if (result.canceled || !result.filePaths || result.filePaths.length === 0) {
+        return;
+      }
+
+      const filePath = result.filePaths[0];
+      
+      // Yükleniyor mesajı göster
+      this.showMessage('Dosya yükleniyor, lütfen bekleyin...', 'info');
+
+      // Dosyayı import et
+      const importResult = await window.api.mahkemeKararlari.importFromFile(filePath);
+
+      if (importResult.success) {
+        this.showMessage(importResult.message, 'success');
+        // Listeyi yenile
+        await this.loadKararlar();
+      } else {
+        this.showError(importResult.message);
+      }
+    } catch (error) {
+      console.error('Dosya import hatası:', error);
+      this.showError('Dosya yüklenirken bir hata oluştu: ' + error.message);
+    }
+  }
   
   formatDate(dateString) {
     const date = new Date(dateString);
@@ -263,6 +305,11 @@ class MahkemeKararlariManager {
   
   showError(message) {
     // Hata mesajı göster
+    alert(message);
+  }
+
+  showMessage(message, type = 'info') {
+    // Bilgi mesajı göster
     alert(message);
   }
 }

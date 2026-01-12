@@ -78,6 +78,63 @@ function setupIpcHandlers() {
   ipcMain.handle('report:generate', async (event, options) => {
     return await db.generateReport(options);
   });
+
+  // Mahkeme Kararları
+  ipcMain.handle('mahkeme-kararlari:getAll', async () => {
+    return await db.getAllMahkemeKararlari();
+  });
+
+  ipcMain.handle('mahkeme-kararlari:save', async (event, data) => {
+    return await db.saveMahkemeKarari(data);
+  });
+
+  ipcMain.handle('mahkeme-kararlari:search', async (event, keyword) => {
+    return await db.searchMahkemeKararlari(keyword);
+  });
+
+  ipcMain.handle('mahkeme-kararlari:delete', async (event, id) => {
+    return await db.deleteMahkemeKarari(id);
+  });
+
+  ipcMain.handle('mahkeme-kararlari:import', async (event, filePath) => {
+    try {
+      const fileContent = fs.readFileSync(filePath, 'utf-8');
+      const kararlar = JSON.parse(fileContent);
+      
+      if (!Array.isArray(kararlar)) {
+        return { success: false, message: 'Dosya formatı hatalı. JSON dizisi bekleniyor.' };
+      }
+
+      let successCount = 0;
+      let errorCount = 0;
+
+      for (const karar of kararlar) {
+        try {
+          await db.saveMahkemeKarari(karar);
+          successCount++;
+        } catch (error) {
+          console.error('Karar kaydedilemedi:', error);
+          errorCount++;
+        }
+      }
+
+      return {
+        success: true,
+        message: `${successCount} karar başarıyla eklendi${errorCount > 0 ? `, ${errorCount} karar eklenemedi` : ''}.`,
+        imported: successCount,
+        failed: errorCount
+      };
+    } catch (error) {
+      console.error('Dosya okuma hatası:', error);
+      return { success: false, message: 'Dosya okunamadı veya parse edilemedi: ' + error.message };
+    }
+  });
+
+  // Dosya seçici dialog
+  ipcMain.handle('dialog:showOpenDialog', async (event, options) => {
+    const result = await dialog.showOpenDialog(mainWindow, options);
+    return result;
+  });
 }
 
 app.whenReady().then(() => {

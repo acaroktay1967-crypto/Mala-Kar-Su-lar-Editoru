@@ -97,10 +97,32 @@ class Database {
         )
       `;
 
+      // Mahkeme Kararları Tablosu
+      const mahkemeKararlariTable = `
+        CREATE TABLE IF NOT EXISTS mahkeme_kararlari (
+          id TEXT PRIMARY KEY,
+          karar_no TEXT NOT NULL,
+          karar_tarihi TEXT NOT NULL,
+          mahkeme_adı TEXT NOT NULL,
+          dosya_no TEXT,
+          suç_türü TEXT NOT NULL,
+          madde_no TEXT,
+          özet TEXT,
+          karar_metni TEXT,
+          emsal_niteliği BOOLEAN DEFAULT 0,
+          ilgili_kanun TEXT,
+          dosya_yolu TEXT,
+          tags TEXT,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )
+      `;
+
       this.db.serialize(() => {
         this.db.run(bilişimTable);
         this.db.run(dolandırıcılıkTable);
         this.db.run(krediKartıTable);
+        this.db.run(mahkemeKararlariTable);
         resolve();
       });
     });
@@ -160,6 +182,67 @@ class Database {
   async generateReport(options) {
     // Rapor oluşturma kodları buraya
     return { success: true, message: "Rapor oluşturuldu" };
+  }
+
+  // Mahkeme Kararları İşlemleri
+  async getAllMahkemeKararlari() {
+    return new Promise((resolve, reject) => {
+      this.db.all("SELECT * FROM mahkeme_kararlari ORDER BY karar_tarihi DESC", (err, rows) => {
+        if (err) reject(err);
+        else resolve(rows || []);
+      });
+    });
+  }
+
+  async saveMahkemeKarari(data) {
+    return new Promise((resolve, reject) => {
+      const id = data.id || uuidv4();
+      const now = new Date().toISOString();
+      
+      const stmt = this.db.prepare(`
+        INSERT OR REPLACE INTO mahkeme_kararlari 
+        (id, karar_no, karar_tarihi, mahkeme_adı, dosya_no, suç_türü, madde_no, 
+         özet, karar_metni, emsal_niteliği, ilgili_kanun, dosya_yolu, tags, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `);
+      
+      stmt.run([
+        id, data.karar_no, data.karar_tarihi, data.mahkeme_adı, data.dosya_no,
+        data.suç_türü, data.madde_no, data.özet, data.karar_metni,
+        data.emsal_niteliği ? 1 : 0, data.ilgili_kanun, data.dosya_yolu,
+        data.tags, now
+      ], function(err) {
+        if (err) reject(err);
+        else resolve({ id, success: true });
+      });
+      
+      stmt.finalize();
+    });
+  }
+
+  async searchMahkemeKararlari(keyword) {
+    return new Promise((resolve, reject) => {
+      const query = `
+        SELECT * FROM mahkeme_kararlari 
+        WHERE karar_no LIKE ? OR özet LIKE ? OR karar_metni LIKE ? OR mahkeme_adı LIKE ?
+        ORDER BY karar_tarihi DESC
+      `;
+      const searchTerm = `%${keyword}%`;
+      
+      this.db.all(query, [searchTerm, searchTerm, searchTerm, searchTerm], (err, rows) => {
+        if (err) reject(err);
+        else resolve(rows || []);
+      });
+    });
+  }
+
+  async deleteMahkemeKarari(id) {
+    return new Promise((resolve, reject) => {
+      this.db.run("DELETE FROM mahkeme_kararlari WHERE id = ?", [id], function(err) {
+        if (err) reject(err);
+        else resolve({ success: true, changes: this.changes });
+      });
+    });
   }
 }
 
