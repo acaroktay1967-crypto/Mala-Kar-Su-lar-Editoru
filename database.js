@@ -119,11 +119,23 @@ class Database {
       `;
 
       this.db.serialize(() => {
-        this.db.run(bilişimTable);
-        this.db.run(dolandırıcılıkTable);
-        this.db.run(krediKartıTable);
-        this.db.run(mahkemeKararlariTable);
-        resolve();
+        this.db.run(bilişimTable, (err) => {
+          if (err) console.error('Error creating bilişim_suclari table:', err);
+        });
+        this.db.run(dolandırıcılıkTable, (err) => {
+          if (err) console.error('Error creating nitelikli_dolandırıcılık table:', err);
+        });
+        this.db.run(krediKartıTable, (err) => {
+          if (err) console.error('Error creating kredi_kartı_suclari table:', err);
+        });
+        this.db.run(mahkemeKararlariTable, (err) => {
+          if (err) {
+            console.error('Error creating mahkeme_kararlari table:', err);
+            reject(err);
+          } else {
+            resolve();
+          }
+        });
       });
     });
   }
