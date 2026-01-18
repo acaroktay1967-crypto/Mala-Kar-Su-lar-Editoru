@@ -82,6 +82,23 @@ function setupIpcHandlers() {
     return await db.deleteYağmaSuçu(id);
   });
   
+  // Hırsızlık Suçları (TCK 141-145)
+  ipcMain.handle('hırsızlık:getAll', async () => {
+    return await db.getAllHırsızlıkSuçları();
+  });
+  
+  ipcMain.handle('hırsızlık:getById', async (event, id) => {
+    return await db.getHırsızlıkSuçuById(id);
+  });
+  
+  ipcMain.handle('hırsızlık:save', async (event, data) => {
+    return await db.saveHırsızlıkSuçu(data);
+  });
+  
+  ipcMain.handle('hırsızlık:delete', async (event, id) => {
+    return await db.deleteHırsızlıkSuçu(id);
+  });
+  
   // Yedekleme ve Geri Yükleme
   ipcMain.handle('backup:create', async (event) => {
     return await db.createBackup();

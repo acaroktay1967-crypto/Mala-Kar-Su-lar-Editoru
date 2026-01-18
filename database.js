@@ -171,6 +171,64 @@ class Database {
         )
       `;
 
+      // Hırsızlık Suçları Tablosu (TCK 141-145)
+      const hırsızlıkTable = `
+        CREATE TABLE IF NOT EXISTS hirsizlik_suclari (
+          id TEXT PRIMARY KEY,
+          dosya_no TEXT,
+          olay_tarihi TEXT,
+          hirsizlik_turu INTEGER,
+          tesebbüs INTEGER DEFAULT 0,
+          konut_isyeri INTEGER DEFAULT 0,
+          gece_vakti INTEGER DEFAULT 0,
+          birden_fazla_kisi INTEGER DEFAULT 0,
+          anahtar_kullanma INTEGER DEFAULT 0,
+          guvenlik_onlemi_kirilma INTEGER DEFAULT 0,
+          kamu_binasi INTEGER DEFAULT 0,
+          ibadethane INTEGER DEFAULT 0,
+          cal_mal_degeri REAL,
+          cal_mal_aciklama TEXT,
+          cal_mal_bulundu INTEGER DEFAULT 0,
+          olay_yeri TEXT,
+          olay_yeri_detay TEXT,
+          durum TEXT,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          created_by TEXT
+        )
+      `;
+
+      // Hırsızlık Mağdurları
+      const hırsızlıkMağdurTable = `
+        CREATE TABLE IF NOT EXISTS hirsizlik_magdurlari (
+          id TEXT PRIMARY KEY,
+          hirsizlik_id TEXT NOT NULL,
+          ad_soyad TEXT NOT NULL,
+          tc_kimlik TEXT,
+          telefon TEXT,
+          adres TEXT,
+          yaş INTEGER,
+          aciklama TEXT,
+          FOREIGN KEY (hirsizlik_id) REFERENCES hirsizlik_suclari(id) ON DELETE CASCADE
+        )
+      `;
+
+      // Hırsızlık Şüphelileri
+      const hırsızlıkŞüpheliTable = `
+        CREATE TABLE IF NOT EXISTS hirsizlik_suphelileri (
+          id TEXT PRIMARY KEY,
+          hirsizlik_id TEXT NOT NULL,
+          ad_soyad TEXT NOT NULL,
+          tc_kimlik TEXT,
+          telefon TEXT,
+          adres TEXT,
+          yaş INTEGER,
+          sabika_durumu TEXT,
+          aciklama TEXT,
+          FOREIGN KEY (hirsizlik_id) REFERENCES hirsizlik_suclari(id) ON DELETE CASCADE
+        )
+      `;
+
       this.db.serialize(() => {
         this.db.run(bilişimTable, (err) => {
           if (err) console.error('Bilişim tablosu hatası:', err);
@@ -196,6 +254,18 @@ class Database {
         this.db.run(yağmaŞüpheliTable, (err) => {
           if (err) console.error('Yağma şüpheli tablosu hatası:', err);
           else console.log('✓ Yağma şüpheli tablosu oluşturuldu');
+        });
+        this.db.run(hırsızlıkTable, (err) => {
+          if (err) console.error('Hırsızlık tablosu hatası:', err);
+          else console.log('✓ Hırsızlık tablosu oluşturuldu');
+        });
+        this.db.run(hırsızlıkMağdurTable, (err) => {
+          if (err) console.error('Hırsızlık mağdur tablosu hatası:', err);
+          else console.log('✓ Hırsızlık mağdur tablosu oluşturuldu');
+        });
+        this.db.run(hırsızlıkŞüpheliTable, (err) => {
+          if (err) console.error('Hırsızlık şüpheli tablosu hatası:', err);
+          else console.log('✓ Hırsızlık şüpheli tablosu oluşturuldu');
           resolve();
         });
       });
@@ -460,6 +530,189 @@ class Database {
         
         stmt.run([
           şüpheliId, yagmaId, şüpheli.ad_soyad, şüpheli.tc_kimlik,
+          şüpheli.telefon, şüpheli.adres, şüpheli.yaş, şüpheli.sabika_durumu, şüpheli.aciklama
+        ], (err) => {
+          if (err) reject(err);
+          else resolve();
+        });
+        
+        stmt.finalize();
+      });
+    });
+
+    return Promise.all(promises);
+  }
+
+  // Hırsızlık Suçları İşlemleri (TCK 141-145)
+  async getAllHırsızlıkSuçları() {
+    return new Promise((resolve, reject) => {
+      this.db.all("SELECT * FROM hirsizlik_suclari ORDER BY created_at DESC", (err, rows) => {
+        if (err) reject(err);
+        else resolve(rows);
+      });
+    });
+  }
+
+  async getHırsızlıkSuçuById(id) {
+    return new Promise((resolve, reject) => {
+      this.db.get("SELECT * FROM hirsizlik_suclari WHERE id = ?", [id], async (err, row) => {
+        if (err) {
+          reject(err);
+          return;
+        }
+        
+        if (!row) {
+          resolve(null);
+          return;
+        }
+
+        // İlişkili verileri de yükle
+        try {
+          const mağdurlar = await this.getHırsızlıkMağdurları(id);
+          const şüpheliler = await this.getHırsızlıkŞüphelileri(id);
+          
+          resolve({
+            ...row,
+            mağdurlar,
+            şüpheliler
+          });
+        } catch (error) {
+          reject(error);
+        }
+      });
+    });
+  }
+
+  async saveHırsızlıkSuçu(data) {
+    return new Promise((resolve, reject) => {
+      const id = data.id || uuidv4();
+      const now = new Date().toISOString();
+      
+      const stmt = this.db.prepare(`
+        INSERT OR REPLACE INTO hirsizlik_suclari 
+        (id, dosya_no, olay_tarihi, hirsizlik_turu, tesebbüs, konut_isyeri, 
+         gece_vakti, birden_fazla_kisi, anahtar_kullanma, guvenlik_onlemi_kirilma,
+         kamu_binasi, ibadethane, cal_mal_degeri, cal_mal_aciklama, 
+         cal_mal_bulundu, olay_yeri, olay_yeri_detay, durum, updated_at, created_by)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `);
+      
+      stmt.run([
+        id, data.dosya_no, data.olay_tarihi, data.hirsizlik_turu, data.tesebbüs || 0,
+        data.konut_isyeri || 0, data.gece_vakti || 0, data.birden_fazla_kisi || 0,
+        data.anahtar_kullanma || 0, data.guvenlik_onlemi_kirilma || 0,
+        data.kamu_binasi || 0, data.ibadethane || 0, data.cal_mal_degeri || 0,
+        data.cal_mal_aciklama, data.cal_mal_bulundu || 0,
+        data.olay_yeri, data.olay_yeri_detay, data.durum || 'Aktif',
+        now, data.created_by
+      ], async (err) => {
+        if (err) {
+          reject(err);
+          return;
+        }
+        
+        // İlişkili verileri kaydet
+        try {
+          if (data.mağdurlar && data.mağdurlar.length > 0) {
+            await this.saveHırsızlıkMağdurları(id, data.mağdurlar);
+          }
+          if (data.şüpheliler && data.şüpheliler.length > 0) {
+            await this.saveHırsızlıkŞüphelileri(id, data.şüpheliler);
+          }
+          resolve({ id, success: true });
+        } catch (error) {
+          reject(error);
+        }
+      });
+      
+      stmt.finalize();
+    });
+  }
+
+  async deleteHırsızlıkSuçu(id) {
+    return new Promise((resolve, reject) => {
+      this.db.run("DELETE FROM hirsizlik_suclari WHERE id = ?", [id], function(err) {
+        if (err) reject(err);
+        else resolve({ success: true, deleted: this.changes });
+      });
+    });
+  }
+
+  // Hırsızlık Mağdurları İşlemleri
+  async getHırsızlıkMağdurları(hirsizlikId) {
+    return new Promise((resolve, reject) => {
+      this.db.all("SELECT * FROM hirsizlik_magdurlari WHERE hirsizlik_id = ?", [hirsizlikId], (err, rows) => {
+        if (err) reject(err);
+        else resolve(rows || []);
+      });
+    });
+  }
+
+  async saveHırsızlıkMağdurları(hirsizlikId, mağdurlar) {
+    // Önce mevcut mağdurları sil
+    await new Promise((resolve, reject) => {
+      this.db.run("DELETE FROM hirsizlik_magdurlari WHERE hirsizlik_id = ?", [hirsizlikId], (err) => {
+        if (err) reject(err);
+        else resolve();
+      });
+    });
+
+    // Yeni mağdurları ekle
+    const promises = mağdurlar.map(mağdur => {
+      return new Promise((resolve, reject) => {
+        const mağdurId = mağdur.id || uuidv4();
+        const stmt = this.db.prepare(`
+          INSERT INTO hirsizlik_magdurlari 
+          (id, hirsizlik_id, ad_soyad, tc_kimlik, telefon, adres, yaş, aciklama)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        `);
+        
+        stmt.run([
+          mağdurId, hirsizlikId, mağdur.ad_soyad, mağdur.tc_kimlik,
+          mağdur.telefon, mağdur.adres, mağdur.yaş, mağdur.aciklama
+        ], (err) => {
+          if (err) reject(err);
+          else resolve();
+        });
+        
+        stmt.finalize();
+      });
+    });
+
+    return Promise.all(promises);
+  }
+
+  // Hırsızlık Şüphelileri İşlemleri
+  async getHırsızlıkŞüphelileri(hirsizlikId) {
+    return new Promise((resolve, reject) => {
+      this.db.all("SELECT * FROM hirsizlik_suphelileri WHERE hirsizlik_id = ?", [hirsizlikId], (err, rows) => {
+        if (err) reject(err);
+        else resolve(rows || []);
+      });
+    });
+  }
+
+  async saveHırsızlıkŞüphelileri(hirsizlikId, şüpheliler) {
+    // Önce mevcut şüphelileri sil
+    await new Promise((resolve, reject) => {
+      this.db.run("DELETE FROM hirsizlik_suphelileri WHERE hirsizlik_id = ?", [hirsizlikId], (err) => {
+        if (err) reject(err);
+        else resolve();
+      });
+    });
+
+    // Yeni şüphelileri ekle
+    const promises = şüpheliler.map(şüpheli => {
+      return new Promise((resolve, reject) => {
+        const şüpheliId = şüpheli.id || uuidv4();
+        const stmt = this.db.prepare(`
+          INSERT INTO hirsizlik_suphelileri 
+          (id, hirsizlik_id, ad_soyad, tc_kimlik, telefon, adres, yaş, sabika_durumu, aciklama)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `);
+        
+        stmt.run([
+          şüpheliId, hirsizlikId, şüpheli.ad_soyad, şüpheli.tc_kimlik,
           şüpheli.telefon, şüpheli.adres, şüpheli.yaş, şüpheli.sabika_durumu, şüpheli.aciklama
         ], (err) => {
           if (err) reject(err);

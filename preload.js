@@ -28,6 +28,14 @@ contextBridge.exposeInMainWorld('api', {
     delete: (id) => ipcRenderer.invoke('yağma:delete', id)
   },
   
+  // Hırsızlık Suçları
+  hırsızlık: {
+    getAll: () => ipcRenderer.invoke('hırsızlık:getAll'),
+    getById: (id) => ipcRenderer.invoke('hırsızlık:getById', id),
+    save: (data) => ipcRenderer.invoke('hırsızlık:save', data),
+    delete: (id) => ipcRenderer.invoke('hırsızlık:delete', id)
+  },
+  
   // Yedekleme
   backup: {
     create: () => ipcRenderer.invoke('backup:create'),
