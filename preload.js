@@ -20,6 +20,14 @@ contextBridge.exposeInMainWorld('api', {
     save: (data) => ipcRenderer.invoke('kredi-kartı:save', data)
   },
   
+  // Yağma Suçları
+  yağma: {
+    getAll: () => ipcRenderer.invoke('yağma:getAll'),
+    getById: (id) => ipcRenderer.invoke('yağma:getById', id),
+    save: (data) => ipcRenderer.invoke('yağma:save', data),
+    delete: (id) => ipcRenderer.invoke('yağma:delete', id)
+  },
+  
   // Yedekleme
   backup: {
     create: () => ipcRenderer.invoke('backup:create'),

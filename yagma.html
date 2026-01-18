@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TCK Mala Karşı İşlenen Suçlar Editörü - Yağma Suçları</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="main.css">
+    <link rel="stylesheet" href="robbery.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="app-header">
+            <div class="logo">
+                <i class="fas fa-balance-scale"></i>
+                <h1>TCK Mala Karşı İşlenen Suçlar Editörü</h1>
+            </div>
+            <div class="status-bar">
+                <span id="connection-status" class="status-connected">
+                    <i class="fas fa-database"></i> Veritabanı Bağlı
+                </span>
+                <span id="record-count">Kayıtlar Yükleniyor...</span>
+            </div>
+        </header>
+
+        <!-- Ana Navigasyon -->
+        <nav class="main-nav">
+            <button class="nav-btn" data-tab="dashboard">
+                <i class="fas fa-home"></i> Ana Panel
+            </button>
+            <button class="nav-btn" data-tab="bilisim">
+                <i class="fas fa-laptop-code"></i> Bilişim Suçları
+            </button>
+            <button class="nav-btn" data-tab="dolandiricilik">
+                <i class="fas fa-user-secret"></i> Nitelikli Dolandırıcılık
+            </button>
+            <button class="nav-btn" data-tab="kredi-karti">
+                <i class="fas fa-credit-card"></i> Kredi Kartı Suçları
+            </button>
+            <button class="nav-btn active" data-tab="yagma">
+                <i class="fas fa-hand-holding-dollar"></i> Yağma Suçları
+            </button>
+            <button class="nav-btn" data-tab="reports">
+                <i class="fas fa-chart-bar"></i> Raporlar
+            </button>
+            <button class="nav-btn" data-tab="backup">
+                <i class="fas fa-save"></i> Yedekleme
+            </button>
+        </nav>
+
+        <!-- İçerik Alanları -->
+        <main class="content-area">
+            <!-- Dashboard -->
+            <section id="dashboard" class="tab-content">
+                <div class="dashboard-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon bilisim">
+                            <i class="fas fa-laptop-code"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3>Bilişim Suçları</h3>
+                            <p class="stat-count" id="count-bilisim">0</p>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon dolandiricilik">
+                            <i class="fas fa-user-secret"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3>Nitelikli Dolandırıcılık</h3>
+                            <p class="stat-count" id="count-dolandiricilik">0</p>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon kredi-karti">
+                            <i class="fas fa-credit-card"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3>Kredi Kartı Suçları</h3>
+                            <p class="stat-count" id="count-kredi-karti">0</p>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-icon yagma">
+                            <i class="fas fa-hand-holding-dollar"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3>Yağma Suçları</h3>
+                            <p class="stat-count" id="count-yagma">0</p>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon total">
+                            <i class="fas fa-gavel"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3>Toplam Suç Kaydı</h3>
+                            <p class="stat-count" id="count-total">0</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Yağma Suçları Ana Sayfa -->
+            <section id="yagma" class="tab-content active">
+                <div class="tab-header">
+                    <h2><i class="fas fa-hand-holding-dollar"></i> Yağma Suçları Yönetimi (TCK 148-149)</h2>
+                    <button class="btn-primary" id="btn-new-yagma">
+                        <i class="fas fa-plus"></i> Yeni Yağma Kaydı
+                    </button>
+                </div>
+
+                <!-- Yağma Suçları Listesi -->
+                <div class="data-table-container">
+                    <table class="data-table" id="yagma-table">
+                        <thead>
+                            <tr>
+                                <th>Dosya No</th>
+                                <th>Olay Tarihi</th>
+                                <th>Yağma Türü</th>
+                                <th>Mağdur Sayısı</th>
+                                <th>Çalınan Mal Değeri</th>
+                                <th>Durum</th>
+                                <th>İşlemler</th>
+                            </tr>
+                        </thead>
+                        <tbody id="yagma-table-body">
+                            <!-- Veriler JavaScript ile doldurulacak -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+            
+        </main>
+
+        <!-- Yağma Suçu Kayıt Modal -->
+        <div class="modal" id="modal-yagma-form">
+            <div class="modal-content modal-large">
+                <div class="modal-header">
+                    <h3><i class="fas fa-hand-holding-dollar"></i> Yağma Suçu Kaydı (TCK 148-149)</h3>
+                    <button class="modal-close" onclick="closeYagmaModal()">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <form id="form-yagma">
+                        <!-- Temel Bilgiler Card -->
+                        <div class="form-card">
+                            <h4><i class="fas fa-info-circle"></i> Temel Bilgiler</h4>
+                            <div class="form-grid">
+                                <div class="form-group">
+                                    <label for="dosya-no">📋 Dosya Numarası *</label>
+                                    <input type="text" id="dosya-no" name="dosya_no" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="olay-tarihi">📅 Olay Tarihi *</label>
+                                    <input type="datetime-local" id="olay-tarihi" name="olay_tarihi" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="olay-yeri">📍 Olay Yeri</label>
+                                    <input type="text" id="olay-yeri" name="olay_yeri" placeholder="İl/İlçe">
+                                </div>
+                                <div class="form-group full-width">
+                                    <label for="olay-yeri-detay">📝 Olay Yeri Detay</label>
+                                    <textarea id="olay-yeri-detay" name="olay_yeri_detay" rows="2"></textarea>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Nitelikli Haller Card -->
+                        <div class="form-card">
+                            <h4><i class="fas fa-exclamation-triangle"></i> Nitelikli Haller</h4>
+                            <div class="checkbox-grid">
+                                <div class="checkbox-item">
+                                    <input type="checkbox" id="check-silah" name="silah_var">
+                                    <label for="check-silah">🔫 Silahla İşlenen (TCK 149/1-a)</label>
+                                </div>
+                                <div class="checkbox-item">
+                                    <input type="checkbox" id="check-coklu-fail" name="coklu_fail">
+                                    <label for="check-coklu-fail">👥 Birden Fazla Kişiyle (TCK 149/1-b)</label>
+                                </div>
+                                <div class="checkbox-item">
+                                    <input type="checkbox" id="check-kimlik-gizleme" name="kimlik_gizleme">
+                                    <label for="check-kimlik-gizleme">🎭 Yüzü Kapalı/Kimliği Belirsiz (TCK 149/1-c)</label>
+                                </div>
+                                <div class="checkbox-item">
+                                    <input type="checkbox" id="check-gece-vakti" name="gece_vakti">
+                                    <label for="check-gece-vakti">🌙 Gece Vakti İşlenen (TCK 149/1-ç)</label>
+                                </div>
+                                <div class="checkbox-item">
+                                    <input type="checkbox" id="check-magdur-zayifligi" name="magdur_zayifligi">
+                                    <label for="check-magdur-zayifligi">🩺 Mağdur Zayıflığından Yararlanma (TCK 149/1-d)</label>
+                                </div>
+                                <div class="checkbox-item">
+                                    <input type="checkbox" id="check-kamu-binasi" name="kamu_binasi">
+                                    <label for="check-kamu-binasi">🏛️ Kamu Binası (TCK 149/1-e)</label>
+                                </div>
+                                <div class="checkbox-item">
+                                    <input type="checkbox" id="check-tasit-ici" name="tasit_ici">
+                                    <label for="check-tasit-ici">🚗 Taşıt İçinde (TCK 149/1-f)</label>
+                                </div>
+                                <div class="checkbox-item">
+                                    <input type="checkbox" id="check-tesebbüs" name="tesebbüs">
+                                    <label for="check-tesebbüs">⚠️ Teşebbüs Aşamasında Kaldı</label>
+                                </div>
+                                <div class="checkbox-item danger">
+                                    <input type="checkbox" id="check-agir-neticeli" name="agir_neticeli">
+                                    <label for="check-agir-neticeli">💀 Ağır Neticeli (TCK 149/2 - Ağırlaştırılmış Müebbet)</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Silah Bilgileri Card (Conditional) -->
+                        <div class="form-card" id="silah-card" style="display: none;">
+                            <h4><i class="fas fa-gun"></i> Silah Bilgileri</h4>
+                            <div id="silah-list"></div>
+                            <button type="button" class="btn-secondary" onclick="addWeaponRow()">
+                                <i class="fas fa-plus"></i> Silah Ekle
+                            </button>
+                        </div>
+
+                        <!-- Çalınan Mal Bilgileri Card -->
+                        <div class="form-card">
+                            <h4><i class="fas fa-coins"></i> Çalınan Mal Bilgileri</h4>
+                            <div class="form-grid">
+                                <div class="form-group">
+                                    <label for="cal-mal-degeri">💰 Toplam Değer (TRY)</label>
+                                    <input type="number" id="cal-mal-degeri" name="cal_mal_degeri" step="0.01" min="0">
+                                </div>
+                                <div class="form-group">
+                                    <label for="cal-mal-bulundu">🔍 Ele Geçirildi mi?</label>
+                                    <select id="cal-mal-bulundu" name="cal_mal_bulundu">
+                                        <option value="0">Hayır</option>
+                                        <option value="1">Evet</option>
+                                    </select>
+                                </div>
+                                <div class="form-group full-width">
+                                    <label for="cal-mal-aciklama">📝 Çalınan Mallar (Açıklama)</label>
+                                    <textarea id="cal-mal-aciklama" name="cal_mal_aciklama" rows="3" placeholder="Çalınan malların listesi ve açıklaması..."></textarea>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Mağdurlar Card -->
+                        <div class="form-card">
+                            <h4><i class="fas fa-user-injured"></i> Mağdurlar</h4>
+                            <div id="magdur-list"></div>
+                            <button type="button" class="btn-secondary" onclick="addVictimRow()">
+                                <i class="fas fa-plus"></i> Mağdur Ekle
+                            </button>
+                        </div>
+
+                        <!-- Şüpheliler Card -->
+                        <div class="form-card">
+                            <h4><i class="fas fa-user-secret"></i> Şüpheliler</h4>
+                            <div id="supheli-list"></div>
+                            <button type="button" class="btn-secondary" onclick="addSuspectRow()">
+                                <i class="fas fa-plus"></i> Şüpheli Ekle
+                            </button>
+                        </div>
+
+                        <!-- Ceza Hesaplama Göstergesi -->
+                        <div class="form-card sentence-calculator">
+                            <h4><i class="fas fa-gavel"></i> Öngörülen Ceza</h4>
+                            <div id="sentence-display" class="sentence-display">
+                                <div class="sentence-result">
+                                    <span class="sentence-text">Bilgileri girdikçe ceza hesaplanacaktır...</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Form Butonları -->
+                        <div class="form-actions">
+                            <button type="button" class="btn-secondary" onclick="closeYagmaModal()">
+                                <i class="fas fa-times"></i> İptal
+                            </button>
+                            <button type="submit" class="btn-primary">
+                                <i class="fas fa-save"></i> Kaydet
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <footer class="app-footer">
+            <p>© 2024 Türk Ceza Kanunu Mala Karşı İşlenen Suçlar Editörü v1.0 - Yağma Suçları Modülü</p>
+            <p class="version">TCK 148-149 Yağma Suçu</p>
+        </footer>
+    </div>
+
+    <!-- JavaScript Dosyaları -->
+    <script src="robbery.js"></script>
+    <script src="robbery-ui.js"></script>
+    <script src="mains.js"></script>
+</body>
+</html>
