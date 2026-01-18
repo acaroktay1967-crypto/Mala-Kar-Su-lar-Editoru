@@ -229,6 +229,26 @@ class Database {
         )
       `;
 
+      // Delil Yönetimi Tablosu (Tüm suç modülleri için ortak)
+      const delilTable = `
+        CREATE TABLE IF NOT EXISTS deliller (
+          id TEXT PRIMARY KEY,
+          suc_modul TEXT NOT NULL,
+          suc_id TEXT NOT NULL,
+          delil_turu TEXT NOT NULL,
+          dosya_adi TEXT NOT NULL,
+          dosya_yolu TEXT NOT NULL,
+          dosya_boyutu INTEGER,
+          mime_type TEXT,
+          kategori TEXT,
+          aciklama TEXT,
+          yuklenme_tarihi DATETIME DEFAULT CURRENT_TIMESTAMP,
+          yuklenen_kisi TEXT,
+          metadata TEXT,
+          INDEX idx_suc_modul_id (suc_modul, suc_id)
+        )
+      `;
+
       this.db.serialize(() => {
         this.db.run(bilişimTable, (err) => {
           if (err) console.error('Bilişim tablosu hatası:', err);
@@ -266,6 +286,10 @@ class Database {
         this.db.run(hırsızlıkŞüpheliTable, (err) => {
           if (err) console.error('Hırsızlık şüpheli tablosu hatası:', err);
           else console.log('✓ Hırsızlık şüpheli tablosu oluşturuldu');
+        });
+        this.db.run(delilTable, (err) => {
+          if (err) console.error('Delil tablosu hatası:', err);
+          else console.log('✓ Delil tablosu oluşturuldu');
           resolve();
         });
       });
@@ -724,6 +748,103 @@ class Database {
     });
 
     return Promise.all(promises);
+  }
+
+  // Delil Yönetimi İşlemleri
+  async getAllDeliller(sucModul, sucId) {
+    return new Promise((resolve, reject) => {
+      const query = sucId 
+        ? "SELECT * FROM deliller WHERE suc_modul = ? AND suc_id = ? ORDER BY yuklenme_tarihi DESC"
+        : "SELECT * FROM deliller WHERE suc_modul = ? ORDER BY yuklenme_tarihi DESC";
+      
+      const params = sucId ? [sucModul, sucId] : [sucModul];
+      
+      this.db.all(query, params, (err, rows) => {
+        if (err) reject(err);
+        else resolve(rows || []);
+      });
+    });
+  }
+
+  async getDelilById(id) {
+    return new Promise((resolve, reject) => {
+      this.db.get("SELECT * FROM deliller WHERE id = ?", [id], (err, row) => {
+        if (err) reject(err);
+        else resolve(row);
+      });
+    });
+  }
+
+  async saveDelil(data) {
+    return new Promise((resolve, reject) => {
+      const id = data.id || uuidv4();
+      const now = new Date().toISOString();
+      
+      const stmt = this.db.prepare(`
+        INSERT OR REPLACE INTO deliller 
+        (id, suc_modul, suc_id, delil_turu, dosya_adi, dosya_yolu, 
+         dosya_boyutu, mime_type, kategori, aciklama, yuklenme_tarihi, yuklenen_kisi, metadata)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `);
+      
+      stmt.run([
+        id, data.suc_modul, data.suc_id, data.delil_turu, data.dosya_adi,
+        data.dosya_yolu, data.dosya_boyutu, data.mime_type, data.kategori || 'Genel',
+        data.aciklama, now, data.yuklenen_kisi || 'Sistem', data.metadata || '{}'
+      ], (err) => {
+        if (err) {
+          reject(err);
+          return;
+        }
+        resolve({ id, success: true });
+      });
+      
+      stmt.finalize();
+    });
+  }
+
+  async deleteDelil(id) {
+    return new Promise((resolve, reject) => {
+      // Önce dosya yolunu al
+      this.db.get("SELECT dosya_yolu FROM deliller WHERE id = ?", [id], (err, row) => {
+        if (err) {
+          reject(err);
+          return;
+        }
+        
+        // Dosyayı sil
+        if (row && row.dosya_yolu && fs.existsSync(row.dosya_yolu)) {
+          try {
+            fs.unlinkSync(row.dosya_yolu);
+          } catch (error) {
+            console.error('Dosya silinirken hata:', error);
+          }
+        }
+        
+        // Veritabanı kaydını sil
+        this.db.run("DELETE FROM deliller WHERE id = ?", [id], function(err) {
+          if (err) reject(err);
+          else resolve({ success: true, deleted: this.changes });
+        });
+      });
+    });
+  }
+
+  async getDelillerBySucModulAndId(sucModul, sucId) {
+    return this.getAllDeliller(sucModul, sucId);
+  }
+
+  async countDeliller(sucModul, sucId) {
+    return new Promise((resolve, reject) => {
+      this.db.get(
+        "SELECT COUNT(*) as count FROM deliller WHERE suc_modul = ? AND suc_id = ?",
+        [sucModul, sucId],
+        (err, row) => {
+          if (err) reject(err);
+          else resolve(row.count);
+        }
+      );
+    });
   }
 
   // Yedekleme İşlemleri

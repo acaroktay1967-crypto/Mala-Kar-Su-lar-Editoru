@@ -99,6 +99,27 @@ function setupIpcHandlers() {
     return await db.deleteHırsızlıkSuçu(id);
   });
   
+  // Delil Yönetimi
+  ipcMain.handle('delil:getAll', async (event, sucModul, sucId) => {
+    return await db.getAllDeliller(sucModul, sucId);
+  });
+  
+  ipcMain.handle('delil:getById', async (event, id) => {
+    return await db.getDelilById(id);
+  });
+  
+  ipcMain.handle('delil:save', async (event, data) => {
+    return await db.saveDelil(data);
+  });
+  
+  ipcMain.handle('delil:delete', async (event, id) => {
+    return await db.deleteDelil(id);
+  });
+  
+  ipcMain.handle('delil:count', async (event, sucModul, sucId) => {
+    return await db.countDeliller(sucModul, sucId);
+  });
+  
   // Yedekleme ve Geri Yükleme
   ipcMain.handle('backup:create', async (event) => {
     return await db.createBackup();

@@ -36,6 +36,15 @@ contextBridge.exposeInMainWorld('api', {
     delete: (id) => ipcRenderer.invoke('hırsızlık:delete', id)
   },
   
+  // Delil Yönetimi
+  delil: {
+    getAll: (sucModul, sucId) => ipcRenderer.invoke('delil:getAll', sucModul, sucId),
+    getById: (id) => ipcRenderer.invoke('delil:getById', id),
+    save: (data) => ipcRenderer.invoke('delil:save', data),
+    delete: (id) => ipcRenderer.invoke('delil:delete', id),
+    count: (sucModul, sucId) => ipcRenderer.invoke('delil:count', sucModul, sucId)
+  },
+  
   // Yedekleme
   backup: {
     create: () => ipcRenderer.invoke('backup:create'),
