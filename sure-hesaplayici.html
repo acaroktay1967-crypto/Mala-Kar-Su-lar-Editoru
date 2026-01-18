@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Süre Hesaplayıcı - Zamanaşımı ve Kanun Yolları</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="main.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .calculator-container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 2rem;
+        }
+
+        .calculator-tabs {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .calc-tab-btn {
+            padding: 1rem 1.5rem;
+            border: none;
+            background: white;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.3s;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .calc-tab-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        }
+
+        .calc-tab-btn.active {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+        }
+
+        .calc-panel {
+            display: none;
+            background: white;
+            border-radius: 12px;
+            padding: 2rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .calc-panel.active {
+            display: block;
+            animation: fadeIn 0.3s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .calc-form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .calc-form-group label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: #2c3e50;
+        }
+
+        .calc-form-group input,
+        .calc-form-group select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+        }
+
+        .calc-form-group input:focus,
+        .calc-form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .calc-btn {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .calc-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4);
+        }
+
+        .result-card {
+            margin-top: 2rem;
+            padding: 2rem;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #f5f7fa, #c3cfe2);
+            display: none;
+        }
+
+        .result-card.show {
+            display: block;
+            animation: slideDown 0.3s;
+        }
+
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .result-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .result-icon {
+            font-size: 3rem;
+        }
+
+        .result-title {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        .result-details {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+        }
+
+        .result-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .result-row:last-child {
+            border-bottom: none;
+        }
+
+        .result-label {
+            font-weight: 600;
+            color: #555;
+        }
+
+        .result-value {
+            color: #2c3e50;
+            font-weight: bold;
+        }
+
+        .urgency-badge {
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-weight: bold;
+            display: inline-block;
+        }
+
+        .urgency-critical {
+            background: #ff4444;
+            color: white;
+        }
+
+        .urgency-warning {
+            background: #ffaa00;
+            color: white;
+        }
+
+        .urgency-normal {
+            background: #4CAF50;
+            color: white;
+        }
+
+        .urgency-safe {
+            background: #00bcd4;
+            color: white;
+        }
+
+        .info-box {
+            background: #e3f2fd;
+            border-left: 4px solid #2196F3;
+            padding: 1rem;
+            margin: 1rem 0;
+            border-radius: 4px;
+        }
+
+        .info-box h4 {
+            color: #1976D2;
+            margin: 0 0 0.5rem 0;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+        }
+
+        .help-text {
+            font-size: 0.9rem;
+            color: #666;
+            margin-top: 0.25rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="calculator-container">
+        <header style="text-align: center; margin-bottom: 3rem;">
+            <h1><i class="fas fa-clock"></i> Süre Hesaplayıcı</h1>
+            <p style="color: #666; font-size: 1.1rem;">Zamanaşımı, İtiraz ve Kanun Yolu Süreleri</p>
+        </header>
+
+        <!-- Tab Butonları -->
+        <div class="calculator-tabs">
+            <button class="calc-tab-btn active" data-panel="statute">
+                <i class="fas fa-hourglass-end"></i> Zamanaşımı
+            </button>
+            <button class="calc-tab-btn" data-panel="appeal">
+                <i class="fas fa-gavel"></i> İtiraz Süreleri
+            </button>
+            <button class="calc-tab-btn" data-panel="detention">
+                <i class="fas fa-user-lock"></i> Tutuklama Süreleri
+            </button>
+            <button class="calc-tab-btn" data-panel="deferment">
+                <i class="fas fa-pause-circle"></i> HAGB Süreleri
+            </button>
+            <button class="calc-tab-btn" data-panel="notification">
+                <i class="fas fa-envelope"></i> Tebligat Süreleri
+            </button>
+        </div>
+
+        <!-- Zamanaşımı Paneli -->
+        <div class="calc-panel active" id="panel-statute">
+            <h2><i class="fas fa-hourglass-end"></i> Zamanaşımı Hesaplama (TCK 66-68)</h2>
+            <div class="info-box">
+                <h4>📌 Bilgi</h4>
+                <p>Dava zamanaşımı, suçun işlendiği tarihten itibaren başlar ve belirlenen süre içinde dava açılmazsa ceza kovuşturması yapılamaz.</p>
+            </div>
+
+            <form id="form-statute">
+                <div class="form-grid">
+                    <div class="calc-form-group">
+                        <label for="crime-date">Suçun İşlendiği Tarih *</label>
+                        <input type="date" id="crime-date" required>
+                    </div>
+                    <div class="calc-form-group">
+                        <label for="sentence-years">Öngörülen Ceza (Yıl) *</label>
+                        <select id="sentence-years" required>
+                            <option value="">Seçiniz</option>
+                            <option value="aggravated_life">Ağırlaştırılmış Müebbet (30 yıl)</option>
+                            <option value="life">Müebbet (30 yıl)</option>
+                            <option value="20">15 yıldan fazla (25 yıl)</option>
+                            <option value="10">5-15 yıl arası (15 yıl)</option>
+                            <option value="3">1-5 yıl arası (10 yıl)</option>
+                            <option value="0.5">1 yıldan az (8 yıl)</option>
+                        </select>
+                        <span class="help-text">Parantez içindeki süre zamanaşımı süresidir</span>
+                    </div>
+                </div>
+
+                <div class="calc-form-group">
+                    <label>
+                        <input type="checkbox" id="sexual-crime-minor">
+                        Çocuğa karşı cinsel suç (Mağdur 18 yaşına gelene kadar zamanaşımı işlemez)
+                    </label>
+                </div>
+
+                <div class="calc-form-group">
+                    <label>
+                        <input type="checkbox" id="constitutional-crime">
+                        Anayasayı ihlal suçu (Zamanaşımı uygulanmaz)
+                    </label>
+                </div>
+
+                <button type="submit" class="calc-btn">
+                    <i class="fas fa-calculator"></i> Hesapla
+                </button>
+            </form>
+
+            <div class="result-card" id="result-statute"></div>
+        </div>
+
+        <!-- İtiraz Süreleri Paneli -->
+        <div class="calc-panel" id="panel-appeal">
+            <h2><i class="fas fa-gavel"></i> İtiraz ve Kanun Yolu Süreleri (CMK)</h2>
+            <div class="info-box">
+                <h4>📌 Bilgi</h4>
+                <p>Karar tebliğ tarihinden itibaren hesaplanır. Süre mesai bitimine kadar geçerlidir.</p>
+            </div>
+
+            <form id="form-appeal">
+                <div class="form-grid">
+                    <div class="calc-form-group">
+                        <label for="decision-date">Karar/Tebliğ Tarihi *</label>
+                        <input type="date" id="decision-date" required>
+                    </div>
+                    <div class="calc-form-group">
+                        <label for="appeal-type">İtiraz Türü *</label>
+                        <select id="appeal-type" required>
+                            <option value="">Seçiniz</option>
+                            <option value="OBJECTION_TO_DECISION">Hakimin kararına itiraz (7 gün)</option>
+                            <option value="OBJECTION_TO_PROSECUTOR">Kovuşturmaya yer olmadığı kararına itiraz (15 gün)</option>
+                            <option value="APPEAL_TO_REGIONAL_COURT">Bölge Adliye Mahkemesine istinaf (15 gün)</option>
+                            <option value="APPEAL_TO_SUPREME_COURT">Yargıtay'a temyiz (15 gün)</option>
+                            <option value="CORRECTION_REQUEST">Karar düzeltme (15 gün)</option>
+                            <option value="OBJECTION_TO_ENFORCEMENT">İnfaz hakimine itiraz (30 gün)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <button type="submit" class="calc-btn">
+                    <i class="fas fa-calculator"></i> Hesapla
+                </button>
+            </form>
+
+            <div class="result-card" id="result-appeal"></div>
+        </div>
+
+        <!-- Tutuklama Süreleri Paneli -->
+        <div class="calc-panel" id="panel-detention">
+            <h2><i class="fas fa-user-lock"></i> Tutuklama Süreleri (CMK 102)</h2>
+            <div class="info-box">
+                <h4>📌 Bilgi</h4>
+                <p>Soruşturma aşamasında 1 yıl, kovuşturma aşamasında 2 yıl (ağır cezalarda 3 yıla kadar uzatılabilir).</p>
+            </div>
+
+            <form id="form-detention">
+                <div class="form-grid">
+                    <div class="calc-form-group">
+                        <label for="detention-date">Tutuklama Tarihi *</label>
+                        <input type="date" id="detention-date" required>
+                    </div>
+                    <div class="calc-form-group">
+                        <label for="detention-stage">Aşama *</label>
+                        <select id="detention-stage" required>
+                            <option value="">Seçiniz</option>
+                            <option value="investigation">Soruşturma (1 yıl)</option>
+                            <option value="trial">Kovuşturma (2 yıl)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <button type="submit" class="calc-btn">
+                    <i class="fas fa-calculator"></i> Hesapla
+                </button>
+            </form>
+
+            <div class="result-card" id="result-detention"></div>
+        </div>
+
+        <!-- HAGB Paneli -->
+        <div class="calc-panel" id="panel-deferment">
+            <h2><i class="fas fa-pause-circle"></i> Hükmün Açıklanmasının Geri Bırakılması (CMK 231)</h2>
+            <div class="info-box">
+                <h4>📌 Bilgi</h4>
+                <p>Denetim süresi 2 yıldan az ceza için 3 yıl, 2 yıldan fazla ceza için 5 yıldır.</p>
+            </div>
+
+            <form id="form-deferment">
+                <div class="form-grid">
+                    <div class="calc-form-group">
+                        <label for="judgment-date">Karar Tarihi *</label>
+                        <input type="date" id="judgment-date" required>
+                    </div>
+                    <div class="calc-form-group">
+                        <label for="sentence-length">Ceza Süresi *</label>
+                        <select id="sentence-length" required>
+                            <option value="">Seçiniz</option>
+                            <option value="1">2 yıldan az (3 yıl denetim)</option>
+                            <option value="3">2 yıldan fazla (5 yıl denetim)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <button type="submit" class="calc-btn">
+                    <i class="fas fa-calculator"></i> Hesapla
+                </button>
+            </form>
+
+            <div class="result-card" id="result-deferment"></div>
+        </div>
+
+        <!-- Tebligat Süreleri Paneli -->
+        <div class="calc-panel" id="panel-notification">
+            <h2><i class="fas fa-envelope"></i> Tebligat Süreleri (CMK)</h2>
+            <div class="info-box">
+                <h4>📌 Bilgi</h4>
+                <p>Tebligattan sonra kanun yolu başvurusu için tanınan süreler.</p>
+            </div>
+
+            <form id="form-notification">
+                <div class="form-grid">
+                    <div class="calc-form-group">
+                        <label for="notification-date">Tebligat Tarihi *</label>
+                        <input type="date" id="notification-date" required>
+                    </div>
+                    <div class="calc-form-group">
+                        <label for="notification-type">Tebligat Türü *</label>
+                        <select id="notification-type" required>
+                            <option value="">Seçiniz</option>
+                            <option value="DOMESTIC_NOTIFICATION">Yurtiçi (7 gün)</option>
+                            <option value="FOREIGN_NOTIFICATION">Yurtdışı (15 gün)</option>
+                            <option value="PUBLIC_NOTIFICATION">İlan yoluyla (15 gün)</option>
+                        </select>
+                    </div>
+                    <div class="calc-form-group">
+                        <label for="additional-days">Ek İtiraz Süresi (gün)</label>
+                        <input type="number" id="additional-days" value="0" min="0">
+                        <span class="help-text">Örn: İstinaf için 15 gün</span>
+                    </div>
+                </div>
+
+                <button type="submit" class="calc-btn">
+                    <i class="fas fa-calculator"></i> Hesapla
+                </button>
+            </form>
+
+            <div class="result-card" id="result-notification"></div>
+        </div>
+    </div>
+
+    <script src="duration-calculator.js"></script>
+    <script src="duration-calculator-ui.js"></script>
+</body>
+</html>
