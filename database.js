@@ -172,14 +172,32 @@ class Database {
       `;
 
       this.db.serialize(() => {
-        this.db.run(bilişimTable);
-        this.db.run(dolandırıcılıkTable);
-        this.db.run(krediKartıTable);
-        this.db.run(yağmaTable);
-        this.db.run(yağmaSilahTable);
-        this.db.run(yağmaMağdurTable);
-        this.db.run(yağmaŞüpheliTable);
-        resolve();
+        this.db.run(bilişimTable, (err) => {
+          if (err) console.error('Bilişim tablosu hatası:', err);
+        });
+        this.db.run(dolandırıcılıkTable, (err) => {
+          if (err) console.error('Dolandırıcılık tablosu hatası:', err);
+        });
+        this.db.run(krediKartıTable, (err) => {
+          if (err) console.error('Kredi kartı tablosu hatası:', err);
+        });
+        this.db.run(yağmaTable, (err) => {
+          if (err) console.error('Yağma tablosu hatası:', err);
+          else console.log('✓ Yağma tablosu oluşturuldu');
+        });
+        this.db.run(yağmaSilahTable, (err) => {
+          if (err) console.error('Yağma silah tablosu hatası:', err);
+          else console.log('✓ Yağma silah tablosu oluşturuldu');
+        });
+        this.db.run(yağmaMağdurTable, (err) => {
+          if (err) console.error('Yağma mağdur tablosu hatası:', err);
+          else console.log('✓ Yağma mağdur tablosu oluşturuldu');
+        });
+        this.db.run(yağmaŞüpheliTable, (err) => {
+          if (err) console.error('Yağma şüpheli tablosu hatası:', err);
+          else console.log('✓ Yağma şüpheli tablosu oluşturuldu');
+          resolve();
+        });
       });
     });
   }
