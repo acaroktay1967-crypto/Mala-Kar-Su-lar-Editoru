@@ -45,6 +45,16 @@ contextBridge.exposeInMainWorld('api', {
     count: (sucModul, sucId) => ipcRenderer.invoke('delil:count', sucModul, sucId)
   },
   
+  // Hukuki Görüş Notları
+  hukukiGorus: {
+    getAll: () => ipcRenderer.invoke('hukukiGorus:getAll'),
+    getById: (id) => ipcRenderer.invoke('hukukiGorus:getById', id),
+    save: (data) => ipcRenderer.invoke('hukukiGorus:save', data),
+    delete: (id) => ipcRenderer.invoke('hukukiGorus:delete', id),
+    search: (criteria) => ipcRenderer.invoke('hukukiGorus:search', criteria),
+    getStats: () => ipcRenderer.invoke('hukukiGorus:stats')
+  },
+  
   // Yedekleme
   backup: {
     create: () => ipcRenderer.invoke('backup:create'),

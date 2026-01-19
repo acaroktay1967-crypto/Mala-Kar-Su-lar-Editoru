@@ -249,6 +249,29 @@ class Database {
         )
       `;
 
+      // Hukuki Görüş Notları Tablosu
+      const hukukiGorusTable = `
+        CREATE TABLE IF NOT EXISTS hukuki_gorus_notlari (
+          id TEXT PRIMARY KEY,
+          vaka_id TEXT,
+          ai_analiz_id TEXT,
+          baslik TEXT NOT NULL,
+          icerik TEXT NOT NULL,
+          kategori TEXT NOT NULL,
+          oncelik TEXT,
+          yazar TEXT NOT NULL,
+          etiketler TEXT,
+          olusturma_tarihi DATETIME DEFAULT CURRENT_TIMESTAMP,
+          guncelleme_tarihi DATETIME DEFAULT CURRENT_TIMESTAMP,
+          ekler TEXT,
+          iliskili_notlar TEXT,
+          metadata TEXT,
+          INDEX idx_vaka_id (vaka_id),
+          INDEX idx_ai_analiz_id (ai_analiz_id),
+          INDEX idx_kategori (kategori)
+        )
+      `;
+
       this.db.serialize(() => {
         this.db.run(bilişimTable, (err) => {
           if (err) console.error('Bilişim tablosu hatası:', err);
@@ -290,6 +313,10 @@ class Database {
         this.db.run(delilTable, (err) => {
           if (err) console.error('Delil tablosu hatası:', err);
           else console.log('✓ Delil tablosu oluşturuldu');
+        });
+        this.db.run(hukukiGorusTable, (err) => {
+          if (err) console.error('Hukuki görüş notları tablosu hatası:', err);
+          else console.log('✓ Hukuki görüş notları tablosu oluşturuldu');
           resolve();
         });
       });
@@ -862,6 +889,172 @@ class Database {
   async generateReport(options) {
     // Rapor oluşturma kodları buraya
     return { success: true, message: "Rapor oluşturuldu" };
+  }
+
+  // Hukuki Görüş Notları İşlemleri
+  async getAllHukukiGorusNotlari() {
+    return new Promise((resolve, reject) => {
+      this.db.all(
+        "SELECT * FROM hukuki_gorus_notlari ORDER BY olusturma_tarihi DESC",
+        (err, rows) => {
+          if (err) reject(err);
+          else resolve(rows);
+        }
+      );
+    });
+  }
+
+  async getHukukiGorusByIdAsync(id) {
+    return new Promise((resolve, reject) => {
+      this.db.get(
+        "SELECT * FROM hukuki_gorus_notlari WHERE id = ?",
+        [id],
+        (err, row) => {
+          if (err) reject(err);
+          else resolve(row);
+        }
+      );
+    });
+  }
+
+  async saveHukukiGorusNotu(data) {
+    return new Promise((resolve, reject) => {
+      const id = data.id || `NOTE-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+      
+      this.db.run(
+        `INSERT OR REPLACE INTO hukuki_gorus_notlari 
+        (id, vaka_id, ai_analiz_id, baslik, icerik, kategori, oncelik, yazar, etiketler, 
+         olusturma_tarihi, guncelleme_tarihi, ekler, iliskili_notlar, metadata)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          id,
+          data.vaka_id || null,
+          data.ai_analiz_id || null,
+          data.baslik,
+          data.icerik,
+          data.kategori,
+          data.oncelik || 'orta',
+          data.yazar,
+          JSON.stringify(data.etiketler || []),
+          data.olusturma_tarihi || new Date().toISOString(),
+          new Date().toISOString(),
+          JSON.stringify(data.ekler || []),
+          JSON.stringify(data.iliskili_notlar || []),
+          JSON.stringify(data.metadata || {})
+        ],
+        function(err) {
+          if (err) reject(err);
+          else resolve({ success: true, id: id });
+        }
+      );
+    });
+  }
+
+  async deleteHukukiGorusNotu(id) {
+    return new Promise((resolve, reject) => {
+      this.db.run(
+        "DELETE FROM hukuki_gorus_notlari WHERE id = ?",
+        [id],
+        function(err) {
+          if (err) reject(err);
+          else resolve({ success: true, deleted: this.changes });
+        }
+      );
+    });
+  }
+
+  async searchHukukiGorusNotlari(criteria) {
+    return new Promise((resolve, reject) => {
+      let query = "SELECT * FROM hukuki_gorus_notlari WHERE 1=1";
+      const params = [];
+
+      if (criteria.keyword) {
+        query += " AND (baslik LIKE ? OR icerik LIKE ?)";
+        params.push(`%${criteria.keyword}%`, `%${criteria.keyword}%`);
+      }
+
+      if (criteria.kategori) {
+        query += " AND kategori = ?";
+        params.push(criteria.kategori);
+      }
+
+      if (criteria.oncelik) {
+        query += " AND oncelik = ?";
+        params.push(criteria.oncelik);
+      }
+
+      if (criteria.yazar) {
+        query += " AND yazar LIKE ?";
+        params.push(`%${criteria.yazar}%`);
+      }
+
+      if (criteria.ai_analiz_id) {
+        query += " AND ai_analiz_id = ?";
+        params.push(criteria.ai_analiz_id);
+      }
+
+      query += " ORDER BY olusturma_tarihi DESC";
+
+      if (criteria.limit) {
+        query += " LIMIT ?";
+        params.push(criteria.limit);
+      }
+
+      this.db.all(query, params, (err, rows) => {
+        if (err) reject(err);
+        else resolve(rows);
+      });
+    });
+  }
+
+  async getHukukiGorusIstatistikleri() {
+    return new Promise((resolve, reject) => {
+      const stats = {};
+      
+      // Toplam not sayısı
+      this.db.get(
+        "SELECT COUNT(*) as total FROM hukuki_gorus_notlari",
+        (err, row) => {
+          if (err) {
+            reject(err);
+            return;
+          }
+          stats.toplam = row.total;
+          
+          // Kategoriye göre dağılım
+          this.db.all(
+            "SELECT kategori, COUNT(*) as sayi FROM hukuki_gorus_notlari GROUP BY kategori",
+            (err, rows) => {
+              if (err) {
+                reject(err);
+                return;
+              }
+              stats.kategoriyeGore = {};
+              rows.forEach(r => {
+                stats.kategoriyeGore[r.kategori] = r.sayi;
+              });
+              
+              // Önceliğe göre dağılım
+              this.db.all(
+                "SELECT oncelik, COUNT(*) as sayi FROM hukuki_gorus_notlari GROUP BY oncelik",
+                (err, rows) => {
+                  if (err) {
+                    reject(err);
+                    return;
+                  }
+                  stats.onceligeGore = {};
+                  rows.forEach(r => {
+                    stats.onceligeGore[r.oncelik] = r.sayi;
+                  });
+                  
+                  resolve(stats);
+                }
+              );
+            }
+          );
+        }
+      );
+    });
   }
 }
 

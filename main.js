@@ -120,6 +120,31 @@ function setupIpcHandlers() {
     return await db.countDeliller(sucModul, sucId);
   });
   
+  // Hukuki Görüş Notları
+  ipcMain.handle('hukukiGorus:getAll', async () => {
+    return await db.getAllHukukiGorusNotlari();
+  });
+  
+  ipcMain.handle('hukukiGorus:getById', async (event, id) => {
+    return await db.getHukukiGorusByIdAsync(id);
+  });
+  
+  ipcMain.handle('hukukiGorus:save', async (event, data) => {
+    return await db.saveHukukiGorusNotu(data);
+  });
+  
+  ipcMain.handle('hukukiGorus:delete', async (event, id) => {
+    return await db.deleteHukukiGorusNotu(id);
+  });
+  
+  ipcMain.handle('hukukiGorus:search', async (event, criteria) => {
+    return await db.searchHukukiGorusNotlari(criteria);
+  });
+  
+  ipcMain.handle('hukukiGorus:stats', async () => {
+    return await db.getHukukiGorusIstatistikleri();
+  });
+  
   // Yedekleme ve Geri Yükleme
   ipcMain.handle('backup:create', async (event) => {
     return await db.createBackup();
