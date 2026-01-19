@@ -20,6 +20,41 @@ contextBridge.exposeInMainWorld('api', {
     save: (data) => ipcRenderer.invoke('kredi-kartı:save', data)
   },
   
+  // Yağma Suçları
+  yağma: {
+    getAll: () => ipcRenderer.invoke('yağma:getAll'),
+    getById: (id) => ipcRenderer.invoke('yağma:getById', id),
+    save: (data) => ipcRenderer.invoke('yağma:save', data),
+    delete: (id) => ipcRenderer.invoke('yağma:delete', id)
+  },
+  
+  // Hırsızlık Suçları
+  hırsızlık: {
+    getAll: () => ipcRenderer.invoke('hırsızlık:getAll'),
+    getById: (id) => ipcRenderer.invoke('hırsızlık:getById', id),
+    save: (data) => ipcRenderer.invoke('hırsızlık:save', data),
+    delete: (id) => ipcRenderer.invoke('hırsızlık:delete', id)
+  },
+  
+  // Delil Yönetimi
+  delil: {
+    getAll: (sucModul, sucId) => ipcRenderer.invoke('delil:getAll', sucModul, sucId),
+    getById: (id) => ipcRenderer.invoke('delil:getById', id),
+    save: (data) => ipcRenderer.invoke('delil:save', data),
+    delete: (id) => ipcRenderer.invoke('delil:delete', id),
+    count: (sucModul, sucId) => ipcRenderer.invoke('delil:count', sucModul, sucId)
+  },
+  
+  // Hukuki Görüş Notları
+  hukukiGorus: {
+    getAll: () => ipcRenderer.invoke('hukukiGorus:getAll'),
+    getById: (id) => ipcRenderer.invoke('hukukiGorus:getById', id),
+    save: (data) => ipcRenderer.invoke('hukukiGorus:save', data),
+    delete: (id) => ipcRenderer.invoke('hukukiGorus:delete', id),
+    search: (criteria) => ipcRenderer.invoke('hukukiGorus:search', criteria),
+    getStats: () => ipcRenderer.invoke('hukukiGorus:stats')
+  },
+  
   // Yedekleme
   backup: {
     create: () => ipcRenderer.invoke('backup:create'),

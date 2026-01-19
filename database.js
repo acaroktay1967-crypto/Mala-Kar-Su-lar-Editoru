@@ -97,11 +97,228 @@ class Database {
         )
       `;
 
+      // Yağma Suçları Tablosu (TCK 148-149)
+      const yağmaTable = `
+        CREATE TABLE IF NOT EXISTS yagma_suclari (
+          id TEXT PRIMARY KEY,
+          dosya_no TEXT,
+          olay_tarihi TEXT,
+          yagma_turu INTEGER,
+          tesebbüs INTEGER DEFAULT 0,
+          silah_var INTEGER DEFAULT 0,
+          coklu_fail INTEGER DEFAULT 0,
+          kimlik_gizleme INTEGER DEFAULT 0,
+          gece_vakti INTEGER DEFAULT 0,
+          magdur_zayifligi INTEGER DEFAULT 0,
+          kamu_binasi INTEGER DEFAULT 0,
+          tasit_ici INTEGER DEFAULT 0,
+          agir_neticeli INTEGER DEFAULT 0,
+          cal_mal_degeri REAL,
+          cal_mal_aciklama TEXT,
+          cal_mal_bulundu INTEGER DEFAULT 0,
+          olay_yeri TEXT,
+          olay_yeri_detay TEXT,
+          durum TEXT,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          created_by TEXT
+        )
+      `;
+
+      // Yağma Suçu Silah Bilgileri
+      const yağmaSilahTable = `
+        CREATE TABLE IF NOT EXISTS yagma_silah_bilgileri (
+          id TEXT PRIMARY KEY,
+          yagma_id TEXT NOT NULL,
+          silah_turu INTEGER,
+          aciklama TEXT,
+          atesli_silah INTEGER DEFAULT 0,
+          seri_no TEXT,
+          marka TEXT,
+          model TEXT,
+          FOREIGN KEY (yagma_id) REFERENCES yagma_suclari(id) ON DELETE CASCADE
+        )
+      `;
+
+      // Yağma Suçu Mağdurlar
+      const yağmaMağdurTable = `
+        CREATE TABLE IF NOT EXISTS yagma_magdurlari (
+          id TEXT PRIMARY KEY,
+          yagma_id TEXT NOT NULL,
+          ad_soyad TEXT NOT NULL,
+          tc_kimlik TEXT,
+          telefon TEXT,
+          adres TEXT,
+          yaş INTEGER,
+          aciklama TEXT,
+          FOREIGN KEY (yagma_id) REFERENCES yagma_suclari(id) ON DELETE CASCADE
+        )
+      `;
+
+      // Yağma Suçu Şüpheliler
+      const yağmaŞüpheliTable = `
+        CREATE TABLE IF NOT EXISTS yagma_suphelileri (
+          id TEXT PRIMARY KEY,
+          yagma_id TEXT NOT NULL,
+          ad_soyad TEXT NOT NULL,
+          tc_kimlik TEXT,
+          telefon TEXT,
+          adres TEXT,
+          yaş INTEGER,
+          sabika_durumu TEXT,
+          aciklama TEXT,
+          FOREIGN KEY (yagma_id) REFERENCES yagma_suclari(id) ON DELETE CASCADE
+        )
+      `;
+
+      // Hırsızlık Suçları Tablosu (TCK 141-145)
+      const hırsızlıkTable = `
+        CREATE TABLE IF NOT EXISTS hirsizlik_suclari (
+          id TEXT PRIMARY KEY,
+          dosya_no TEXT,
+          olay_tarihi TEXT,
+          hirsizlik_turu INTEGER,
+          tesebbüs INTEGER DEFAULT 0,
+          konut_isyeri INTEGER DEFAULT 0,
+          gece_vakti INTEGER DEFAULT 0,
+          birden_fazla_kisi INTEGER DEFAULT 0,
+          anahtar_kullanma INTEGER DEFAULT 0,
+          guvenlik_onlemi_kirilma INTEGER DEFAULT 0,
+          kamu_binasi INTEGER DEFAULT 0,
+          ibadethane INTEGER DEFAULT 0,
+          cal_mal_degeri REAL,
+          cal_mal_aciklama TEXT,
+          cal_mal_bulundu INTEGER DEFAULT 0,
+          olay_yeri TEXT,
+          olay_yeri_detay TEXT,
+          durum TEXT,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          created_by TEXT
+        )
+      `;
+
+      // Hırsızlık Mağdurları
+      const hırsızlıkMağdurTable = `
+        CREATE TABLE IF NOT EXISTS hirsizlik_magdurlari (
+          id TEXT PRIMARY KEY,
+          hirsizlik_id TEXT NOT NULL,
+          ad_soyad TEXT NOT NULL,
+          tc_kimlik TEXT,
+          telefon TEXT,
+          adres TEXT,
+          yaş INTEGER,
+          aciklama TEXT,
+          FOREIGN KEY (hirsizlik_id) REFERENCES hirsizlik_suclari(id) ON DELETE CASCADE
+        )
+      `;
+
+      // Hırsızlık Şüphelileri
+      const hırsızlıkŞüpheliTable = `
+        CREATE TABLE IF NOT EXISTS hirsizlik_suphelileri (
+          id TEXT PRIMARY KEY,
+          hirsizlik_id TEXT NOT NULL,
+          ad_soyad TEXT NOT NULL,
+          tc_kimlik TEXT,
+          telefon TEXT,
+          adres TEXT,
+          yaş INTEGER,
+          sabika_durumu TEXT,
+          aciklama TEXT,
+          FOREIGN KEY (hirsizlik_id) REFERENCES hirsizlik_suclari(id) ON DELETE CASCADE
+        )
+      `;
+
+      // Delil Yönetimi Tablosu (Tüm suç modülleri için ortak)
+      const delilTable = `
+        CREATE TABLE IF NOT EXISTS deliller (
+          id TEXT PRIMARY KEY,
+          suc_modul TEXT NOT NULL,
+          suc_id TEXT NOT NULL,
+          delil_turu TEXT NOT NULL,
+          dosya_adi TEXT NOT NULL,
+          dosya_yolu TEXT NOT NULL,
+          dosya_boyutu INTEGER,
+          mime_type TEXT,
+          kategori TEXT,
+          aciklama TEXT,
+          yuklenme_tarihi DATETIME DEFAULT CURRENT_TIMESTAMP,
+          yuklenen_kisi TEXT,
+          metadata TEXT,
+          INDEX idx_suc_modul_id (suc_modul, suc_id)
+        )
+      `;
+
+      // Hukuki Görüş Notları Tablosu
+      const hukukiGorusTable = `
+        CREATE TABLE IF NOT EXISTS hukuki_gorus_notlari (
+          id TEXT PRIMARY KEY,
+          vaka_id TEXT,
+          ai_analiz_id TEXT,
+          baslik TEXT NOT NULL,
+          icerik TEXT NOT NULL,
+          kategori TEXT NOT NULL,
+          oncelik TEXT,
+          yazar TEXT NOT NULL,
+          etiketler TEXT,
+          olusturma_tarihi DATETIME DEFAULT CURRENT_TIMESTAMP,
+          guncelleme_tarihi DATETIME DEFAULT CURRENT_TIMESTAMP,
+          ekler TEXT,
+          iliskili_notlar TEXT,
+          metadata TEXT,
+          INDEX idx_vaka_id (vaka_id),
+          INDEX idx_ai_analiz_id (ai_analiz_id),
+          INDEX idx_kategori (kategori)
+        )
+      `;
+
       this.db.serialize(() => {
-        this.db.run(bilişimTable);
-        this.db.run(dolandırıcılıkTable);
-        this.db.run(krediKartıTable);
-        resolve();
+        this.db.run(bilişimTable, (err) => {
+          if (err) console.error('Bilişim tablosu hatası:', err);
+        });
+        this.db.run(dolandırıcılıkTable, (err) => {
+          if (err) console.error('Dolandırıcılık tablosu hatası:', err);
+        });
+        this.db.run(krediKartıTable, (err) => {
+          if (err) console.error('Kredi kartı tablosu hatası:', err);
+        });
+        this.db.run(yağmaTable, (err) => {
+          if (err) console.error('Yağma tablosu hatası:', err);
+          else console.log('✓ Yağma tablosu oluşturuldu');
+        });
+        this.db.run(yağmaSilahTable, (err) => {
+          if (err) console.error('Yağma silah tablosu hatası:', err);
+          else console.log('✓ Yağma silah tablosu oluşturuldu');
+        });
+        this.db.run(yağmaMağdurTable, (err) => {
+          if (err) console.error('Yağma mağdur tablosu hatası:', err);
+          else console.log('✓ Yağma mağdur tablosu oluşturuldu');
+        });
+        this.db.run(yağmaŞüpheliTable, (err) => {
+          if (err) console.error('Yağma şüpheli tablosu hatası:', err);
+          else console.log('✓ Yağma şüpheli tablosu oluşturuldu');
+        });
+        this.db.run(hırsızlıkTable, (err) => {
+          if (err) console.error('Hırsızlık tablosu hatası:', err);
+          else console.log('✓ Hırsızlık tablosu oluşturuldu');
+        });
+        this.db.run(hırsızlıkMağdurTable, (err) => {
+          if (err) console.error('Hırsızlık mağdur tablosu hatası:', err);
+          else console.log('✓ Hırsızlık mağdur tablosu oluşturuldu');
+        });
+        this.db.run(hırsızlıkŞüpheliTable, (err) => {
+          if (err) console.error('Hırsızlık şüpheli tablosu hatası:', err);
+          else console.log('✓ Hırsızlık şüpheli tablosu oluşturuldu');
+        });
+        this.db.run(delilTable, (err) => {
+          if (err) console.error('Delil tablosu hatası:', err);
+          else console.log('✓ Delil tablosu oluşturuldu');
+        });
+        this.db.run(hukukiGorusTable, (err) => {
+          if (err) console.error('Hukuki görüş notları tablosu hatası:', err);
+          else console.log('✓ Hukuki görüş notları tablosu oluşturuldu');
+          resolve();
+        });
       });
     });
   }
@@ -145,6 +362,518 @@ class Database {
   // Diğer tablolar için benzer metodlar...
   // (Nitelikli Dolandırıcılık ve Kredi Kartı Suçları için)
 
+  // Yağma Suçları İşlemleri
+  async getAllYağmaSuçları() {
+    return new Promise((resolve, reject) => {
+      this.db.all("SELECT * FROM yagma_suclari ORDER BY created_at DESC", (err, rows) => {
+        if (err) reject(err);
+        else resolve(rows);
+      });
+    });
+  }
+
+  async getYağmaSuçuById(id) {
+    return new Promise((resolve, reject) => {
+      this.db.get("SELECT * FROM yagma_suclari WHERE id = ?", [id], async (err, row) => {
+        if (err) {
+          reject(err);
+          return;
+        }
+        
+        if (!row) {
+          resolve(null);
+          return;
+        }
+
+        // İlişkili verileri de yükle
+        try {
+          const silahlar = await this.getYağmaSilahları(id);
+          const mağdurlar = await this.getYağmaMağdurları(id);
+          const şüpheliler = await this.getYağmaŞüphelileri(id);
+          
+          resolve({
+            ...row,
+            silahlar,
+            mağdurlar,
+            şüpheliler
+          });
+        } catch (error) {
+          reject(error);
+        }
+      });
+    });
+  }
+
+  async saveYağmaSuçu(data) {
+    return new Promise((resolve, reject) => {
+      const id = data.id || uuidv4();
+      const now = new Date().toISOString();
+      
+      const stmt = this.db.prepare(`
+        INSERT OR REPLACE INTO yagma_suclari 
+        (id, dosya_no, olay_tarihi, yagma_turu, tesebbüs, silah_var, coklu_fail, 
+         kimlik_gizleme, gece_vakti, magdur_zayifligi, kamu_binasi, tasit_ici, 
+         agir_neticeli, cal_mal_degeri, cal_mal_aciklama, cal_mal_bulundu, 
+         olay_yeri, olay_yeri_detay, durum, updated_at, created_by)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `);
+      
+      stmt.run([
+        id, data.dosya_no, data.olay_tarihi, data.yagma_turu, data.tesebbüs || 0,
+        data.silah_var || 0, data.coklu_fail || 0, data.kimlik_gizleme || 0,
+        data.gece_vakti || 0, data.magdur_zayifligi || 0, data.kamu_binasi || 0,
+        data.tasit_ici || 0, data.agir_neticeli || 0, data.cal_mal_degeri || 0,
+        data.cal_mal_aciklama, data.cal_mal_bulundu || 0,
+        data.olay_yeri, data.olay_yeri_detay, data.durum || 'Aktif',
+        now, data.created_by
+      ], async (err) => {
+        if (err) {
+          reject(err);
+          return;
+        }
+        
+        // İlişkili verileri kaydet
+        try {
+          if (data.silahlar && data.silahlar.length > 0) {
+            await this.saveYağmaSilahları(id, data.silahlar);
+          }
+          if (data.mağdurlar && data.mağdurlar.length > 0) {
+            await this.saveYağmaMağdurları(id, data.mağdurlar);
+          }
+          if (data.şüpheliler && data.şüpheliler.length > 0) {
+            await this.saveYağmaŞüphelileri(id, data.şüpheliler);
+          }
+          resolve({ id, success: true });
+        } catch (error) {
+          reject(error);
+        }
+      });
+      
+      stmt.finalize();
+    });
+  }
+
+  async deleteYağmaSuçu(id) {
+    return new Promise((resolve, reject) => {
+      this.db.run("DELETE FROM yagma_suclari WHERE id = ?", [id], function(err) {
+        if (err) reject(err);
+        else resolve({ success: true, deleted: this.changes });
+      });
+    });
+  }
+
+  // Yağma Silah Bilgileri İşlemleri
+  async getYağmaSilahları(yagmaId) {
+    return new Promise((resolve, reject) => {
+      this.db.all("SELECT * FROM yagma_silah_bilgileri WHERE yagma_id = ?", [yagmaId], (err, rows) => {
+        if (err) reject(err);
+        else resolve(rows || []);
+      });
+    });
+  }
+
+  async saveYağmaSilahları(yagmaId, silahlar) {
+    // Önce mevcut silahları sil
+    await new Promise((resolve, reject) => {
+      this.db.run("DELETE FROM yagma_silah_bilgileri WHERE yagma_id = ?", [yagmaId], (err) => {
+        if (err) reject(err);
+        else resolve();
+      });
+    });
+
+    // Yeni silahları ekle
+    const promises = silahlar.map(silah => {
+      return new Promise((resolve, reject) => {
+        const silahId = silah.id || uuidv4();
+        const stmt = this.db.prepare(`
+          INSERT INTO yagma_silah_bilgileri 
+          (id, yagma_id, silah_turu, aciklama, atesli_silah, seri_no, marka, model)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        `);
+        
+        stmt.run([
+          silahId, yagmaId, silah.silah_turu, silah.aciklama,
+          silah.atesli_silah || 0, silah.seri_no, silah.marka, silah.model
+        ], (err) => {
+          if (err) reject(err);
+          else resolve();
+        });
+        
+        stmt.finalize();
+      });
+    });
+
+    return Promise.all(promises);
+  }
+
+  // Yağma Mağdurları İşlemleri
+  async getYağmaMağdurları(yagmaId) {
+    return new Promise((resolve, reject) => {
+      this.db.all("SELECT * FROM yagma_magdurlari WHERE yagma_id = ?", [yagmaId], (err, rows) => {
+        if (err) reject(err);
+        else resolve(rows || []);
+      });
+    });
+  }
+
+  async saveYağmaMağdurları(yagmaId, mağdurlar) {
+    // Önce mevcut mağdurları sil
+    await new Promise((resolve, reject) => {
+      this.db.run("DELETE FROM yagma_magdurlari WHERE yagma_id = ?", [yagmaId], (err) => {
+        if (err) reject(err);
+        else resolve();
+      });
+    });
+
+    // Yeni mağdurları ekle
+    const promises = mağdurlar.map(mağdur => {
+      return new Promise((resolve, reject) => {
+        const mağdurId = mağdur.id || uuidv4();
+        const stmt = this.db.prepare(`
+          INSERT INTO yagma_magdurlari 
+          (id, yagma_id, ad_soyad, tc_kimlik, telefon, adres, yaş, aciklama)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        `);
+        
+        stmt.run([
+          mağdurId, yagmaId, mağdur.ad_soyad, mağdur.tc_kimlik,
+          mağdur.telefon, mağdur.adres, mağdur.yaş, mağdur.aciklama
+        ], (err) => {
+          if (err) reject(err);
+          else resolve();
+        });
+        
+        stmt.finalize();
+      });
+    });
+
+    return Promise.all(promises);
+  }
+
+  // Yağma Şüphelileri İşlemleri
+  async getYağmaŞüphelileri(yagmaId) {
+    return new Promise((resolve, reject) => {
+      this.db.all("SELECT * FROM yagma_suphelileri WHERE yagma_id = ?", [yagmaId], (err, rows) => {
+        if (err) reject(err);
+        else resolve(rows || []);
+      });
+    });
+  }
+
+  async saveYağmaŞüphelileri(yagmaId, şüpheliler) {
+    // Önce mevcut şüphelileri sil
+    await new Promise((resolve, reject) => {
+      this.db.run("DELETE FROM yagma_suphelileri WHERE yagma_id = ?", [yagmaId], (err) => {
+        if (err) reject(err);
+        else resolve();
+      });
+    });
+
+    // Yeni şüphelileri ekle
+    const promises = şüpheliler.map(şüpheli => {
+      return new Promise((resolve, reject) => {
+        const şüpheliId = şüpheli.id || uuidv4();
+        const stmt = this.db.prepare(`
+          INSERT INTO yagma_suphelileri 
+          (id, yagma_id, ad_soyad, tc_kimlik, telefon, adres, yaş, sabika_durumu, aciklama)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `);
+        
+        stmt.run([
+          şüpheliId, yagmaId, şüpheli.ad_soyad, şüpheli.tc_kimlik,
+          şüpheli.telefon, şüpheli.adres, şüpheli.yaş, şüpheli.sabika_durumu, şüpheli.aciklama
+        ], (err) => {
+          if (err) reject(err);
+          else resolve();
+        });
+        
+        stmt.finalize();
+      });
+    });
+
+    return Promise.all(promises);
+  }
+
+  // Hırsızlık Suçları İşlemleri (TCK 141-145)
+  async getAllHırsızlıkSuçları() {
+    return new Promise((resolve, reject) => {
+      this.db.all("SELECT * FROM hirsizlik_suclari ORDER BY created_at DESC", (err, rows) => {
+        if (err) reject(err);
+        else resolve(rows);
+      });
+    });
+  }
+
+  async getHırsızlıkSuçuById(id) {
+    return new Promise((resolve, reject) => {
+      this.db.get("SELECT * FROM hirsizlik_suclari WHERE id = ?", [id], async (err, row) => {
+        if (err) {
+          reject(err);
+          return;
+        }
+        
+        if (!row) {
+          resolve(null);
+          return;
+        }
+
+        // İlişkili verileri de yükle
+        try {
+          const mağdurlar = await this.getHırsızlıkMağdurları(id);
+          const şüpheliler = await this.getHırsızlıkŞüphelileri(id);
+          
+          resolve({
+            ...row,
+            mağdurlar,
+            şüpheliler
+          });
+        } catch (error) {
+          reject(error);
+        }
+      });
+    });
+  }
+
+  async saveHırsızlıkSuçu(data) {
+    return new Promise((resolve, reject) => {
+      const id = data.id || uuidv4();
+      const now = new Date().toISOString();
+      
+      const stmt = this.db.prepare(`
+        INSERT OR REPLACE INTO hirsizlik_suclari 
+        (id, dosya_no, olay_tarihi, hirsizlik_turu, tesebbüs, konut_isyeri, 
+         gece_vakti, birden_fazla_kisi, anahtar_kullanma, guvenlik_onlemi_kirilma,
+         kamu_binasi, ibadethane, cal_mal_degeri, cal_mal_aciklama, 
+         cal_mal_bulundu, olay_yeri, olay_yeri_detay, durum, updated_at, created_by)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `);
+      
+      stmt.run([
+        id, data.dosya_no, data.olay_tarihi, data.hirsizlik_turu, data.tesebbüs || 0,
+        data.konut_isyeri || 0, data.gece_vakti || 0, data.birden_fazla_kisi || 0,
+        data.anahtar_kullanma || 0, data.guvenlik_onlemi_kirilma || 0,
+        data.kamu_binasi || 0, data.ibadethane || 0, data.cal_mal_degeri || 0,
+        data.cal_mal_aciklama, data.cal_mal_bulundu || 0,
+        data.olay_yeri, data.olay_yeri_detay, data.durum || 'Aktif',
+        now, data.created_by
+      ], async (err) => {
+        if (err) {
+          reject(err);
+          return;
+        }
+        
+        // İlişkili verileri kaydet
+        try {
+          if (data.mağdurlar && data.mağdurlar.length > 0) {
+            await this.saveHırsızlıkMağdurları(id, data.mağdurlar);
+          }
+          if (data.şüpheliler && data.şüpheliler.length > 0) {
+            await this.saveHırsızlıkŞüphelileri(id, data.şüpheliler);
+          }
+          resolve({ id, success: true });
+        } catch (error) {
+          reject(error);
+        }
+      });
+      
+      stmt.finalize();
+    });
+  }
+
+  async deleteHırsızlıkSuçu(id) {
+    return new Promise((resolve, reject) => {
+      this.db.run("DELETE FROM hirsizlik_suclari WHERE id = ?", [id], function(err) {
+        if (err) reject(err);
+        else resolve({ success: true, deleted: this.changes });
+      });
+    });
+  }
+
+  // Hırsızlık Mağdurları İşlemleri
+  async getHırsızlıkMağdurları(hirsizlikId) {
+    return new Promise((resolve, reject) => {
+      this.db.all("SELECT * FROM hirsizlik_magdurlari WHERE hirsizlik_id = ?", [hirsizlikId], (err, rows) => {
+        if (err) reject(err);
+        else resolve(rows || []);
+      });
+    });
+  }
+
+  async saveHırsızlıkMağdurları(hirsizlikId, mağdurlar) {
+    // Önce mevcut mağdurları sil
+    await new Promise((resolve, reject) => {
+      this.db.run("DELETE FROM hirsizlik_magdurlari WHERE hirsizlik_id = ?", [hirsizlikId], (err) => {
+        if (err) reject(err);
+        else resolve();
+      });
+    });
+
+    // Yeni mağdurları ekle
+    const promises = mağdurlar.map(mağdur => {
+      return new Promise((resolve, reject) => {
+        const mağdurId = mağdur.id || uuidv4();
+        const stmt = this.db.prepare(`
+          INSERT INTO hirsizlik_magdurlari 
+          (id, hirsizlik_id, ad_soyad, tc_kimlik, telefon, adres, yaş, aciklama)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        `);
+        
+        stmt.run([
+          mağdurId, hirsizlikId, mağdur.ad_soyad, mağdur.tc_kimlik,
+          mağdur.telefon, mağdur.adres, mağdur.yaş, mağdur.aciklama
+        ], (err) => {
+          if (err) reject(err);
+          else resolve();
+        });
+        
+        stmt.finalize();
+      });
+    });
+
+    return Promise.all(promises);
+  }
+
+  // Hırsızlık Şüphelileri İşlemleri
+  async getHırsızlıkŞüphelileri(hirsizlikId) {
+    return new Promise((resolve, reject) => {
+      this.db.all("SELECT * FROM hirsizlik_suphelileri WHERE hirsizlik_id = ?", [hirsizlikId], (err, rows) => {
+        if (err) reject(err);
+        else resolve(rows || []);
+      });
+    });
+  }
+
+  async saveHırsızlıkŞüphelileri(hirsizlikId, şüpheliler) {
+    // Önce mevcut şüphelileri sil
+    await new Promise((resolve, reject) => {
+      this.db.run("DELETE FROM hirsizlik_suphelileri WHERE hirsizlik_id = ?", [hirsizlikId], (err) => {
+        if (err) reject(err);
+        else resolve();
+      });
+    });
+
+    // Yeni şüphelileri ekle
+    const promises = şüpheliler.map(şüpheli => {
+      return new Promise((resolve, reject) => {
+        const şüpheliId = şüpheli.id || uuidv4();
+        const stmt = this.db.prepare(`
+          INSERT INTO hirsizlik_suphelileri 
+          (id, hirsizlik_id, ad_soyad, tc_kimlik, telefon, adres, yaş, sabika_durumu, aciklama)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `);
+        
+        stmt.run([
+          şüpheliId, hirsizlikId, şüpheli.ad_soyad, şüpheli.tc_kimlik,
+          şüpheli.telefon, şüpheli.adres, şüpheli.yaş, şüpheli.sabika_durumu, şüpheli.aciklama
+        ], (err) => {
+          if (err) reject(err);
+          else resolve();
+        });
+        
+        stmt.finalize();
+      });
+    });
+
+    return Promise.all(promises);
+  }
+
+  // Delil Yönetimi İşlemleri
+  async getAllDeliller(sucModul, sucId) {
+    return new Promise((resolve, reject) => {
+      const query = sucId 
+        ? "SELECT * FROM deliller WHERE suc_modul = ? AND suc_id = ? ORDER BY yuklenme_tarihi DESC"
+        : "SELECT * FROM deliller WHERE suc_modul = ? ORDER BY yuklenme_tarihi DESC";
+      
+      const params = sucId ? [sucModul, sucId] : [sucModul];
+      
+      this.db.all(query, params, (err, rows) => {
+        if (err) reject(err);
+        else resolve(rows || []);
+      });
+    });
+  }
+
+  async getDelilById(id) {
+    return new Promise((resolve, reject) => {
+      this.db.get("SELECT * FROM deliller WHERE id = ?", [id], (err, row) => {
+        if (err) reject(err);
+        else resolve(row);
+      });
+    });
+  }
+
+  async saveDelil(data) {
+    return new Promise((resolve, reject) => {
+      const id = data.id || uuidv4();
+      const now = new Date().toISOString();
+      
+      const stmt = this.db.prepare(`
+        INSERT OR REPLACE INTO deliller 
+        (id, suc_modul, suc_id, delil_turu, dosya_adi, dosya_yolu, 
+         dosya_boyutu, mime_type, kategori, aciklama, yuklenme_tarihi, yuklenen_kisi, metadata)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `);
+      
+      stmt.run([
+        id, data.suc_modul, data.suc_id, data.delil_turu, data.dosya_adi,
+        data.dosya_yolu, data.dosya_boyutu, data.mime_type, data.kategori || 'Genel',
+        data.aciklama, now, data.yuklenen_kisi || 'Sistem', data.metadata || '{}'
+      ], (err) => {
+        if (err) {
+          reject(err);
+          return;
+        }
+        resolve({ id, success: true });
+      });
+      
+      stmt.finalize();
+    });
+  }
+
+  async deleteDelil(id) {
+    return new Promise((resolve, reject) => {
+      // Önce dosya yolunu al
+      this.db.get("SELECT dosya_yolu FROM deliller WHERE id = ?", [id], (err, row) => {
+        if (err) {
+          reject(err);
+          return;
+        }
+        
+        // Dosyayı sil
+        if (row && row.dosya_yolu && fs.existsSync(row.dosya_yolu)) {
+          try {
+            fs.unlinkSync(row.dosya_yolu);
+          } catch (error) {
+            console.error('Dosya silinirken hata:', error);
+          }
+        }
+        
+        // Veritabanı kaydını sil
+        this.db.run("DELETE FROM deliller WHERE id = ?", [id], function(err) {
+          if (err) reject(err);
+          else resolve({ success: true, deleted: this.changes });
+        });
+      });
+    });
+  }
+
+  async getDelillerBySucModulAndId(sucModul, sucId) {
+    return this.getAllDeliller(sucModul, sucId);
+  }
+
+  async countDeliller(sucModul, sucId) {
+    return new Promise((resolve, reject) => {
+      this.db.get(
+        "SELECT COUNT(*) as count FROM deliller WHERE suc_modul = ? AND suc_id = ?",
+        [sucModul, sucId],
+        (err, row) => {
+          if (err) reject(err);
+          else resolve(row.count);
+        }
+      );
+    });
+  }
+
   // Yedekleme İşlemleri
   async createBackup() {
     const backupFile = path.join(this.backupPath, `backup_${Date.now()}.db`);
@@ -160,6 +889,172 @@ class Database {
   async generateReport(options) {
     // Rapor oluşturma kodları buraya
     return { success: true, message: "Rapor oluşturuldu" };
+  }
+
+  // Hukuki Görüş Notları İşlemleri
+  async getAllHukukiGorusNotlari() {
+    return new Promise((resolve, reject) => {
+      this.db.all(
+        "SELECT * FROM hukuki_gorus_notlari ORDER BY olusturma_tarihi DESC",
+        (err, rows) => {
+          if (err) reject(err);
+          else resolve(rows);
+        }
+      );
+    });
+  }
+
+  async getHukukiGorusByIdAsync(id) {
+    return new Promise((resolve, reject) => {
+      this.db.get(
+        "SELECT * FROM hukuki_gorus_notlari WHERE id = ?",
+        [id],
+        (err, row) => {
+          if (err) reject(err);
+          else resolve(row);
+        }
+      );
+    });
+  }
+
+  async saveHukukiGorusNotu(data) {
+    return new Promise((resolve, reject) => {
+      const id = data.id || `NOTE-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+      
+      this.db.run(
+        `INSERT OR REPLACE INTO hukuki_gorus_notlari 
+        (id, vaka_id, ai_analiz_id, baslik, icerik, kategori, oncelik, yazar, etiketler, 
+         olusturma_tarihi, guncelleme_tarihi, ekler, iliskili_notlar, metadata)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          id,
+          data.vaka_id || null,
+          data.ai_analiz_id || null,
+          data.baslik,
+          data.icerik,
+          data.kategori,
+          data.oncelik || 'orta',
+          data.yazar,
+          JSON.stringify(data.etiketler || []),
+          data.olusturma_tarihi || new Date().toISOString(),
+          new Date().toISOString(),
+          JSON.stringify(data.ekler || []),
+          JSON.stringify(data.iliskili_notlar || []),
+          JSON.stringify(data.metadata || {})
+        ],
+        function(err) {
+          if (err) reject(err);
+          else resolve({ success: true, id: id });
+        }
+      );
+    });
+  }
+
+  async deleteHukukiGorusNotu(id) {
+    return new Promise((resolve, reject) => {
+      this.db.run(
+        "DELETE FROM hukuki_gorus_notlari WHERE id = ?",
+        [id],
+        function(err) {
+          if (err) reject(err);
+          else resolve({ success: true, deleted: this.changes });
+        }
+      );
+    });
+  }
+
+  async searchHukukiGorusNotlari(criteria) {
+    return new Promise((resolve, reject) => {
+      let query = "SELECT * FROM hukuki_gorus_notlari WHERE 1=1";
+      const params = [];
+
+      if (criteria.keyword) {
+        query += " AND (baslik LIKE ? OR icerik LIKE ?)";
+        params.push(`%${criteria.keyword}%`, `%${criteria.keyword}%`);
+      }
+
+      if (criteria.kategori) {
+        query += " AND kategori = ?";
+        params.push(criteria.kategori);
+      }
+
+      if (criteria.oncelik) {
+        query += " AND oncelik = ?";
+        params.push(criteria.oncelik);
+      }
+
+      if (criteria.yazar) {
+        query += " AND yazar LIKE ?";
+        params.push(`%${criteria.yazar}%`);
+      }
+
+      if (criteria.ai_analiz_id) {
+        query += " AND ai_analiz_id = ?";
+        params.push(criteria.ai_analiz_id);
+      }
+
+      query += " ORDER BY olusturma_tarihi DESC";
+
+      if (criteria.limit) {
+        query += " LIMIT ?";
+        params.push(criteria.limit);
+      }
+
+      this.db.all(query, params, (err, rows) => {
+        if (err) reject(err);
+        else resolve(rows);
+      });
+    });
+  }
+
+  async getHukukiGorusIstatistikleri() {
+    return new Promise((resolve, reject) => {
+      const stats = {};
+      
+      // Toplam not sayısı
+      this.db.get(
+        "SELECT COUNT(*) as total FROM hukuki_gorus_notlari",
+        (err, row) => {
+          if (err) {
+            reject(err);
+            return;
+          }
+          stats.toplam = row.total;
+          
+          // Kategoriye göre dağılım
+          this.db.all(
+            "SELECT kategori, COUNT(*) as sayi FROM hukuki_gorus_notlari GROUP BY kategori",
+            (err, rows) => {
+              if (err) {
+                reject(err);
+                return;
+              }
+              stats.kategoriyeGore = {};
+              rows.forEach(r => {
+                stats.kategoriyeGore[r.kategori] = r.sayi;
+              });
+              
+              // Önceliğe göre dağılım
+              this.db.all(
+                "SELECT oncelik, COUNT(*) as sayi FROM hukuki_gorus_notlari GROUP BY oncelik",
+                (err, rows) => {
+                  if (err) {
+                    reject(err);
+                    return;
+                  }
+                  stats.onceligeGore = {};
+                  rows.forEach(r => {
+                    stats.onceligeGore[r.oncelik] = r.sayi;
+                  });
+                  
+                  resolve(stats);
+                }
+              );
+            }
+          );
+        }
+      );
+    });
   }
 }
 

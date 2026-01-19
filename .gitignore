@@ -40,3 +40,6 @@ temp/
 # Database files (development)
 *.sqlite
 *.db
+
+# Test files
+test-*.js
